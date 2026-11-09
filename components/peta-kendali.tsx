@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import 'leaflet/dist/leaflet.css';
 import {watchMapTiles} from '@/lib/map-tiles.mjs';
+import { isOverdue } from '@/lib/rules.mjs';
 import { formatDate } from '@/lib/types';
 import {ReportImage} from './report-image';
 
@@ -23,7 +24,7 @@ export interface ReportItem {
   [key: string]: any;
 }
 
-export function getUrgency(report: any) {
+export function getUrgency(report: any, now = new Date()) {
   if (report?.status === 'completed') {
     return {
       key: 'completed' as const,
@@ -35,7 +36,13 @@ export function getUrgency(report: any) {
     };
   }
 
-  if (report?.priority === 'urgent' || report?.priority === 'high') {
+  const overdue = Boolean(report && isOverdue(report, now));
+
+  if (
+    report?.priority === 'urgent' ||
+    report?.priority === 'high' ||
+    overdue
+  ) {
     return {
       key: 'urgent' as const,
       label: 'Sangat Darurat',
@@ -309,6 +316,13 @@ export function PetaKendali({
 
   const activeUrgency = selectedReport ? getUrgency(selectedReport) : null;
   const isCompletedReport = selectedReport?.status === 'completed';
+  const isReportOverdue = Boolean(selectedReport && isOverdue(selectedReport));
+  const storedPriorityKey =
+    selectedReport?.priority === 'urgent' || selectedReport?.priority === 'high'
+      ? 'urgent'
+      : selectedReport?.priority === 'medium'
+        ? 'medium'
+        : 'low';
 
   return (
     <div style={{ color: '#e5e5e5', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
@@ -407,6 +421,11 @@ export function PetaKendali({
               <span style={{ background: '#1e293b', color: '#93c5fd', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
                 {formatStatusLabel(selectedReport.status)}
               </span>
+              {isReportOverdue && (
+                <span style={{ background: 'rgba(239, 68, 68, 0.16)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.45)', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                  Melewati target
+                </span>
+              )}
               {!isCompletedReport && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: activeUrgency.bg, color: activeUrgency.color, border: `1px solid ${activeUrgency.border}` }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: activeUrgency.color }} />
@@ -436,9 +455,9 @@ export function PetaKendali({
                   {savingPriority ? 'Menyimpan tingkat urgensi...' : 'Ubah Tingkat Urgensi:'}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('urgent')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: activeUrgency.key === 'urgent' ? 'rgba(239,68,68,0.2)' : '#1a1a1a', color: '#f87171', border: activeUrgency.key === 'urgent' ? '1px solid #ef4444' : '1px solid #262626' }}>🔴 Darurat</button>
-                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('medium')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: activeUrgency.key === 'medium' ? 'rgba(234,179,8,0.2)' : '#1a1a1a', color: '#facc15', border: activeUrgency.key === 'medium' ? '1px solid #eab308' : '1px solid #262626' }}>🟡 Sedang</button>
-                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('low')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: activeUrgency.key === 'low' ? 'rgba(16,185,129,0.2)' : '#1a1a1a', color: '#34d399', border: activeUrgency.key === 'low' ? '1px solid #10b981' : '1px solid #262626' }}>🟢 Rendah</button>
+                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('urgent')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: storedPriorityKey === 'urgent' ? 'rgba(239,68,68,0.2)' : '#1a1a1a', color: '#f87171', border: storedPriorityKey === 'urgent' ? '1px solid #ef4444' : '1px solid #262626' }}>🔴 Darurat</button>
+                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('medium')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: storedPriorityKey === 'medium' ? 'rgba(234,179,8,0.2)' : '#1a1a1a', color: '#facc15', border: storedPriorityKey === 'medium' ? '1px solid #eab308' : '1px solid #262626' }}>🟡 Sedang</button>
+                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('low')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: storedPriorityKey === 'low' ? 'rgba(16,185,129,0.2)' : '#1a1a1a', color: '#34d399', border: storedPriorityKey === 'low' ? '1px solid #10b981' : '1px solid #262626' }}>🟢 Rendah</button>
                 </div>
                 {priorityError && (
                   <p role="alert" style={{ color: '#f87171', fontSize: '11px', margin: '8px 0 0 0' }}>
