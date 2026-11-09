@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {operatorDateError,operatorTargetMin} from '../lib/operator-dates.mjs';
+const now=new Date('2026-11-09T05:00:00Z');
+test('tanggal mulai lampau diizinkan jika target valid',()=>assert.equal(operatorDateError('verify','2026-11-08','2026-11-09',null,now),''));
+test('target kemarin ditolak tetapi target hari ini diterima',()=>{assert.match(operatorDateError('verify','2026-11-08','2026-11-08',null,now),/hari ini/);assert.equal(operatorDateError('verify','2026-11-09','2026-11-09',null,now),'');});
+test('target tidak boleh mendahului tanggal mulai baru atau tersimpan',()=>{assert.match(operatorDateError('verify','2026-11-11','2026-11-10',null,now),/tanggal mulai/);assert.match(operatorDateError('reschedule',undefined,'2026-11-10','2026-11-11',now),/tanggal mulai/);assert.equal(operatorTargetMin('reschedule','','2026-11-11',now),'2026-11-11');});
+test('batas tanggal menggunakan WIB dan berubah setelah tengah malam',()=>{const before=new Date('2026-11-09T16:59:59Z'),after=new Date('2026-11-09T17:00:00Z');assert.equal(operatorDateError('reschedule',null,'2026-11-09','2026-11-01',before),'');assert.match(operatorDateError('reschedule',null,'2026-11-09','2026-11-01',after),/hari ini/);assert.equal(operatorTargetMin('verify','2026-11-01',null,after),'2026-11-10');});
+test('tanggal kosong atau tidak nyata ditolak',()=>{assert.match(operatorDateError('verify','','2026-11-09',null,now),/tanggal mulai/);for(const date of ['',undefined,'2026-02-30','2026-13-01'])assert.match(operatorDateError('reschedule',null,date,null,now),/valid/);});
+test('tindakan tanpa jadwal tidak diwajibkan mengirim tanggal',()=>{for(const action of ['progress','finish','reject'])assert.equal(operatorDateError(action,undefined,undefined,null,now),'');});
