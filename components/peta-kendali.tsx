@@ -122,10 +122,11 @@ export function PetaKendali({
   }, [reports]);
 
   const filteredItems = items.filter((r) => {
+    if (r.status === 'rejected') return false;
     const isDone = r.status === 'completed';
     if (filter === 'completed') return isDone;
-    if (isDone) return false;
     if (filter === 'all') return true;
+    if (isDone) return false;
     if (filter === 'new') return r.status === 'submitted';
     return getUrgency(r).key === filter;
   });
