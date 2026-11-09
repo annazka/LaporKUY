@@ -9,6 +9,7 @@ import './report-location.css';
 import './landing-reports.css';
 import 'leaflet/dist/leaflet.css';
 import './landing-explore.css';
+import './public-explorer.css';
 import './landing-editorial.css';
 import './landing-video.css';
 import './landing-footer.css';
