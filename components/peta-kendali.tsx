@@ -111,15 +111,12 @@ export function PetaKendali({
   const [filter, setFilter] = useState<'all' | 'urgent' | 'medium' | 'low' | 'new' | 'completed'>('all');
   const [selectedId, setSelectedId] = useState<string>(dataList[0]?.id || '');
   const [mapReady, setMapReady] = useState(false);
-<<<<<<< HEAD
   const [savingPriority, setSavingPriority] = useState(false);
   const [priorityError, setPriorityError] = useState('');
-=======
   const [mapAttempt, setMapAttempt] = useState(0);
   const [tileAttempt, setTileAttempt] = useState(0);
   const [mapError, setMapError] = useState('');
   const [tileState, setTileState] = useState({loading:true,error:''});
->>>>>>> 96832974cc51119ac42ce19b18a56c9c9c9a1a43
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
