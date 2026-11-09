@@ -5,3 +5,10 @@ test('daily update is required from repair start, including overdue days',()=>{c
 test('location rejects invalid coordinates and outside Jakarta bounds',()=>{assert.equal(validCoordinates(-6.2088,106.8456),true);assert.equal(validCoordinates(NaN,106.8456),false);assert.equal(validCoordinates(0,0),false);});
 test('redirect cannot escape local routes',()=>{assert.equal(safeNext('//evil.com'),'/dashboard');assert.equal(safeNext('/\\evil.com'),'/dashboard');assert.equal(safeNext('/reports/new'),'/reports/new');});
 test('next preserves report intent and rejects redirects into auth, API and encoded escapes',()=>{for(const path of ['/reports/new','/profile','/profile/vouchers','/profile/reports','/dashboard/reports','/reports?status=completed'])assert.equal(safeNext(path),path);for(const path of ['/login','/register','/api/auth','https://evil.com','/%2f%2fevil.com','/reports/../../login','/dashboard\n','/dashboard\\evil'])assert.equal(safeNext(path),'/dashboard');});
+
+test('login voucher mempertahankan tujuan katalog dan parameter pencarian',()=>{
+ for(const path of ['/profile/vouchers','/profile/vouchers?category=makanan'])assert.equal(safeNext(path),path);
+});
+test('penambahan katalog tidak mengizinkan rute lain atau redirect eksternal',()=>{
+ for(const path of ['/profile/settings','/profile/vouchers/extra','//evil.com/profile/vouchers','/profile/%2fvouchers','/profile/vouchers/../../api/auth','/profile/vouchers\evil.com'])assert.equal(safeNext(path),'/dashboard');
+});
