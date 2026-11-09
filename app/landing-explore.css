@@ -42,13 +42,21 @@
     gap:14px;
   }
   .landing-header .nav-actions>*{flex-shrink:0}
+  .landing-header.has-account .brand{font-size:18px}
+  .landing-header.has-account .brand-mark{width:32px;height:34px;margin-right:6px}
+  .landing-header.has-account .landing-menu-toggle{width:36px;height:36px}
+  .landing-header.has-account .nav-actions{width:auto;justify-content:flex-end;gap:8px}
+  .landing-header.has-account .nav-actions .nav-point-balance{font-size:12px;gap:5px}
+  .landing-header.has-account .nav-point-balance svg{width:15px;height:15px}
+  .landing-header.has-account .profile-pill>span{width:28px;height:28px}
+}
+@media(max-width:360px){
   .landing-header.has-account .nav-wrap,
   .landing-header.is-floating.has-account .nav-wrap{
     grid-template-columns:minmax(0,1fr) auto;
     grid-template-areas:"brand menu" "actions actions";
   }
-  .landing-header.has-account .nav-actions{width:100%}
-  .landing-header.has-account .nav-actions{justify-content:center}
+  .landing-header.has-account .nav-actions{width:100%;justify-content:center;gap:14px}
 }
 .landing-header .landing-menu-action{display:none}
 @media(max-width:900px){
