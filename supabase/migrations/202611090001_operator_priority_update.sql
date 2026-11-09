@@ -30,10 +30,12 @@ begin
  elsif p_action='priority' then
  if r.status='awaiting_confirmation' then raise exception 'Laporan sedang menunggu konfirmasi pelapor.';end if;
  if p_priority is null or p_priority not in('low','medium','high','urgent') then raise exception 'Prioritas tidak valid.';end if;
- p_progress:=r.progress;p_start:=r.start_date;p_target:=r.target_date;
+ p_progress:=r.progress;p_start:=r.start_date;p_target:=r.target_date;p_photo_path:=null;
  else raise exception 'Aksi tidak valid.';
  end if;
  update public.reports set status=next_status,priority=p_priority,progress=p_progress,start_date=p_start,target_date=p_target,last_update_at=case when p_action='priority' then r.last_update_at else now() end where id=p_report_id;
  insert into public.report_updates(report_id,kind,message,photo_path,progress,previous_target,new_target)values(p_report_id,p_action,p_message,p_photo_path,p_progress,case when p_action='reschedule'then old_target end,case when p_action in('verify','reschedule')then p_target end);
 end;$$;
 commit;
+
+select strpos(pg_get_functiondef('private.operator_update(uuid,text,text,integer,date,date,text,text)'::regprocedure), $q$p_action='priority'$q$) > 0 as operator_priority_update_aktif;

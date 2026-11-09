@@ -7,7 +7,7 @@ insert into storage.objects(bucket_id,name,owner_id)values
  ('report-photos','10000000-0000-4000-8000-000000000001/10000000-0000-4000-8000-000000000001.jpg','10000000-0000-4000-8000-000000000001'),
  ('report-photos','10000000-0000-4000-8000-000000000002/10000000-0000-4000-8000-000000000002.jpg','10000000-0000-4000-8000-000000000002');
 do $$
-declare rid uuid; result jsonb; denied boolean:=false; redeemed_code text; balance bigint; i integer; today date:=(now() at time zone 'Asia/Jakarta')::date;
+declare rid uuid; snap public.reports; result jsonb; denied boolean:=false; redeemed_code text; balance bigint; i integer; today date:=(now() at time zone 'Asia/Jakarta')::date;
 begin
  if has_table_privilege('authenticated','public.reports','INSERT')then raise exception 'Direct INSERT exposed';end if;
  if has_function_privilege('anon','public.operator_update(uuid,text,text,integer,date,date,text,text)','EXECUTE')then raise exception 'Anonymous RPC exposed';end if;
@@ -34,6 +34,21 @@ begin
  perform public.operator_update(rid,'progress','Persiapan alat dan material sudah dilakukan.',30,null,null,'high',null);
  perform public.operator_update(rid,'reschedule','Perubahan jadwal karena pasokan material terlambat.',0,null,today+5,'high',null);
  if not exists(select 1 from public.report_updates where report_id=rid and previous_target=today+3 and new_target=today+5)then raise exception 'Schedule history lost';end if;
+ update public.reports set last_update_at=now()-interval '1 day' where id=rid;
+ select * into snap from public.reports where id=rid;
+ perform public.operator_update(rid,'priority','Tingkat urgensi diubah menjadi Darurat melalui Peta Kendali.',99,today+1,today+9,'urgent',null);
+ if not exists(
+  select 1 from public.reports r
+  where r.id=rid
+   and r.priority='urgent'
+   and r.support_count=snap.support_count
+   and r.status=snap.status
+   and r.progress=snap.progress
+   and r.start_date is not distinct from snap.start_date
+   and r.target_date is not distinct from snap.target_date
+   and r.last_update_at is not distinct from snap.last_update_at
+ )then raise exception 'Priority update mutated other report fields';end if;
+ if not exists(select 1 from public.report_updates where report_id=rid and kind='priority' and previous_target is null and new_target is null)then raise exception 'Priority audit entry missing or altered target dates';end if;
  denied:=false;begin perform public.operator_update(rid,'finish','Perbaikan selesai tanpa foto bukti.',0,null,null,'high',null);exception when others then denied:=true;end;
  if not denied then raise exception 'Finish without photo allowed';end if;
  perform public.operator_update(rid,'finish','Perbaikan jalan telah diselesaikan dengan bukti.',0,null,null,'high','10000000-0000-4000-8000-000000000002/10000000-0000-4000-8000-000000000002.jpg');
@@ -61,4 +76,4 @@ do $$begin
 end;$$;
 reset role;
 rollback;
-select 'PASS: private photos, RPC permissions, deduplication, role restrictions, schedule history, evidence, confirmation, rewards and redemption' as integration_result;
+select 'PASS: private photos, RPC permissions, deduplication, role restrictions, schedule history, priority isolation, evidence, confirmation, rewards and redemption' as integration_result;

@@ -6,6 +6,12 @@ export async function POST(request: Request) {
   try {
     await authorize(request, true);
     const b = await request.json();
+    if (
+      b.action === "priority" &&
+      (typeof b.priority !== "string" || !validPriorities.includes(b.priority))
+    ) {
+      throw new Error("Prioritas tidak valid.");
+    }
     const priority = validPriorities.includes(b.priority)
       ? b.priority
       : "medium";
@@ -22,20 +28,16 @@ export async function POST(request: Request) {
     try {
       await rpc("operator_update", payload);
     } catch (err) {
-      if (
-        b.action === "priority" &&
-        err instanceof Error &&
-        /Aksi tidak valid/i.test(err.message) &&
-        (b.status === "scheduled" || b.status === "in_progress")
-      ) {
-        try {
-          await rpc("operator_update", { ...payload, p_action: "reschedule" });
-        } catch {
-          await rpc("operator_update", { ...payload, p_action: "progress" });
-        }
-      } else {
-        throw err;
+      const msg =
+        err instanceof Error
+          ? err.message
+          : String((err as { message?: unknown })?.message || "");
+      if (b.action === "priority" && /Aksi tidak valid/i.test(msg)) {
+        throw new Error(
+          "Aksi pembaruan prioritas belum tersedia di database. Jalankan migrasi 202611090001_operator_priority_update.sql.",
+        );
       }
+      throw err;
     }
     return NextResponse.json({ ok: true });
   } catch (e) {

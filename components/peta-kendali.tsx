@@ -139,6 +139,7 @@ export function PetaKendali({
     if (
       !selectedReport ||
       selectedReport.status === 'completed' ||
+      selectedReport.status === 'rejected' ||
       selectedReport.priority === newPriority ||
       savingPriority
     ) {
@@ -176,10 +177,6 @@ export function PetaKendali({
           id: targetId,
           action: 'priority',
           priority: newPriority,
-          status: selectedReport.status,
-          progress: selectedReport.progress,
-          start_date: selectedReport.start_date,
-          target_date: selectedReport.target_date,
           message: `Tingkat urgensi diubah menjadi ${label} melalui Peta Kendali.`,
         }),
       });
@@ -449,7 +446,7 @@ export function PetaKendali({
               <ReportImage report={selectedReport} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
             </div>
 
-            {!isCompletedReport && (
+            {!isCompletedReport && selectedReport.status !== 'rejected' && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ fontSize: '11px', color: '#8a8a8a', marginBottom: '6px' }}>
                   {savingPriority ? 'Menyimpan tingkat urgensi...' : 'Ubah Tingkat Urgensi:'}
