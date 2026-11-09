@@ -111,7 +111,7 @@ export function LandingVouchers({
   return (
     <section
       id="voucher"
-      className={`container section landing-vouchers${catalog ? " voucher-catalog" : ""}`}
+      className={catalog ? "landing-vouchers voucher-catalog" : "container section landing-vouchers"}
       aria-labelledby="voucher-title"
     >
       <div className="section-heading">

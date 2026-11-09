@@ -5,8 +5,6 @@ import {
   MapPin,
   Clock3,
   Layers,
-  MoveUpRight,
-  CheckCheck,
   ArrowRight,
   Construction,
   Coins,
@@ -20,6 +18,7 @@ import {
 } from "@/lib/types";
 import { isOverdue, missingDailyUpdate } from "@/lib/rules.mjs";
 import { Logout } from "./widgets";
+import { MainNav } from "./main-nav";
 import { SiteHeader } from "./site-header";
 import { AuthLink } from "./auth-modal";
 export function Brand() {
@@ -59,12 +58,7 @@ export async function Header() {
         )
       }
     >
-      <nav aria-label="Navigasi utama">
-        {u && <Link href="/dashboard">Dashboard</Link>}
-        <Link href="/#laporan">Jelajahi laporan</Link>
-        {u && <Link href="/profile/vouchers">Voucher</Link>}
-        {u?.role === "operator" && <Link href="/operator">Operator</Link>}
-      </nav>
+      <MainNav signedIn={Boolean(u)} operator={u?.role === "operator"}/>
     </SiteHeader>
   );
 }

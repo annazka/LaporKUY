@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import {ReportImage} from './report-image';
-import {useEffect,useMemo,useRef,useState,type FormEvent,type ReactNode} from 'react';
+import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react';
 import {useRouter} from 'next/navigation';
 import {MapPin,ArrowUpRight,X,RefreshCw,LayoutDashboard,ClipboardList,Ticket,History,ClipboardCheck,Clock3,TriangleAlert,CheckCircle2} from 'lucide-react';
 import type {Report,Update,Viewer,Voucher} from '@/lib/types';
@@ -11,7 +11,7 @@ import {isOverdue,missingDailyUpdate,jakartaDate} from '@/lib/rules.mjs';
 import {auditCsv,operatorViews,queueMatches,operatorBanner} from '@/lib/operator-data.mjs';
 import {Logout} from './widgets';
 import {OperatorForm} from './forms';
-import {OperatorMap} from './operator-map';import {PetaKendali} from './peta-kendali';
+import {PetaKendali} from './peta-kendali';
 export type AdminEvent=Omit<Update,'report_id'>&{report_id:string|null;voucher_id?:string};
 export type Redemption={id:string;voucher_id:string;code:string;created_at:string};
 const time=(value:string)=>new Intl.DateTimeFormat('id-ID',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Jakarta'}).format(new Date(value))+' WIB';
@@ -34,13 +34,11 @@ function Drawer({report,updates,onClose,onSaved}:{report:Report;updates:AdminEve
 }
 export function OperatorDashboard({user,reports,updates,vouchers,redemptions,voucherEvents,voucherReady,voucherNotice,failures,asOf}:{asOf:string;user:Viewer;reports:Report[];updates:Update[];vouchers:Voucher[];redemptions:Redemption[];voucherEvents:AdminEvent[];voucherReady:boolean;voucherNotice:string;failures:string[]}){
  const router=useRouter();
- const [view,setView]=useState('ringkasan'),[tab,setTab]=useState('all'),[query,setQuery]=useState(''),[priority,setPriority]=useState('all'),[category,setCategory]=useState('all'),[mapFilter,setMapFilter]=useState('all'),[auditTab,setAuditTab]=useState('all'),[auditQuery,setAuditQuery]=useState(''),[selected,setSelected]=useState<string|null>(null),[inspected,setInspected]=useState<string|null>(null),[notice,setNotice]=useState(''),[now,setNow]=useState<Date>(()=>new Date(asOf));
+ const [view,setView]=useState('ringkasan'),[tab,setTab]=useState('all'),[query,setQuery]=useState(''),[priority,setPriority]=useState('all'),[category,setCategory]=useState('all'),[auditTab,setAuditTab]=useState('all'),[auditQuery,setAuditQuery]=useState(''),[selected,setSelected]=useState<string|null>(null),[notice,setNotice]=useState(''),[now,setNow]=useState<Date>(()=>new Date(asOf));
  useEffect(()=>{const tick=()=>setNow(new Date());tick();const timer=setInterval(tick,60000);window.addEventListener('focus',tick);return()=>{clearInterval(timer);window.removeEventListener('focus',tick);};},[]);
  const clock=now;
  const counts=Object.fromEntries(['all','submitted','daily','overdue','active','completed','attention','severe'].map(t=>[t,reports.filter(r=>queueMatches(r,t,clock)).length]));
  const filtered=reports.filter(r=>queueMatches(r,tab,clock)&&(priority==='all'||r.priority===priority)&&(category==='all'||r.category===category)&&`${r.id} ${r.title} ${r.address}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>Number(missingDailyUpdate(b,clock))-Number(missingDailyUpdate(a,clock))||Date.parse(b.created_at)-Date.parse(a.created_at));
- const mapRows=useMemo(()=>reports.filter(r=>queueMatches(r,mapFilter,now)),[reports,mapFilter,now]);
- const chosen=mapRows.find(r=>r.id===inspected)||mapRows[0];
  const activeReport=reports.find(r=>r.id===selected);
  const events:AdminEvent[]=[...updates,...voucherEvents].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));
  const auditRows=events.filter(e=>(auditTab==='all'||e.kind===auditTab)&&`${e.report_id||e.voucher_id||''} ${e.message}`.toLowerCase().includes(auditQuery.toLowerCase()));

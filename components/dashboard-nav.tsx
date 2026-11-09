@@ -1,17 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-const links = [
-  ["/dashboard", "Ringkasan"],
-  ["/dashboard/reports", "Laporan saya"],
-  ["/reports/new", "Buat laporan"],
-  ["/profile", "Profil saya"],
-];
+import {accountLinks} from "@/lib/account-navigation.mjs";
 export function DashboardNav() {
   const path = usePathname();
   return (
     <nav className="dashboard-side" aria-label="Navigasi akun">
-      {links.map(([href, label]) => (
+      {accountLinks.map(({href, label}) => (
         <Link
           key={href}
           className={path === href ? "active" : ""}
