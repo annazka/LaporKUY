@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { authorize } from "@/lib/http";
 import { GeminiError } from "@/lib/gemini.mjs";
 import { createAnalysisService } from "@/lib/analysis-service.mjs";
+import {issueReportDraft} from "@/lib/report-draft.mjs";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 const analysis = createAnalysisService();
@@ -22,13 +23,14 @@ export async function POST(request: Request) {
         { error: "Pilih foto untuk dianalisis." },
         { status: 400 },
       );
+    const bytes = new Uint8Array(await file.arrayBuffer());
     const result = await analysis.run(
       user.id,
-      new Uint8Array(await file.arrayBuffer()),
+      bytes,
       file.type,
       { signal },
     );
-    return NextResponse.json(result, {
+    return NextResponse.json({...result,report_token:issueReportDraft(user.id,bytes,file.type,result)}, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (e) {

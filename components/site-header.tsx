@@ -4,23 +4,19 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  Blocks,
+  UsersRound,
   Construction,
   Route,
-  ShieldCheck,
   CircleHelp,
-  MapPin,
   Ticket,
   Menu,
   X,
 } from "lucide-react";
 
 const sections = [
-  { id: "fitur", label: "Fitur", icon: Blocks },
+  { id: "tentang-kita", label: "Tentang kita", icon: UsersRound },
   { id: "cara-kerja", label: "Cara kerja", icon: Route },
   { id: "laporan", label: "Laporan", icon: Construction },
-  { id: "peta", label: "Peta", icon: MapPin },
-  { id: "dampak", label: "Dampak", icon: ShieldCheck },
   { id: "voucher", label: "Voucher", icon: Ticket },
   { id: "faq", label: "FAQ", icon: CircleHelp },
 ];

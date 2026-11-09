@@ -21,7 +21,7 @@ export async function backend(
       "Content-Type": "application/json",
       ...init.headers,
     },
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.any([...(init.signal?[init.signal]:[]),AbortSignal.timeout(20000)]),
   });
   const payload = await response.json().catch(() => null);
   if (!response.ok)
@@ -59,12 +59,12 @@ export async function requireViewer(operator = false, next = "/dashboard") {
   if (operator && user.role !== "operator") redirect("/dashboard");
   return user;
 }
-export async function rpc(name: string, args: Record<string, unknown>) {
+export async function rpc(name: string, args: Record<string, unknown>, signal?: AbortSignal) {
   const token = await accessToken();
   if (!token) throw new Error("Silakan masuk terlebih dahulu.");
   return backend(
     `/rest/v1/rpc/${name}`,
-    { method: "POST", body: JSON.stringify(args) },
+    { method: "POST", body: JSON.stringify(args), signal },
     token,
   );
 }

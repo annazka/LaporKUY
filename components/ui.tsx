@@ -61,7 +61,6 @@ export async function Header() {
     >
       <nav aria-label="Navigasi utama">
         {u && <Link href="/dashboard">Dashboard</Link>}
-        {u && <Link href="/dashboard/reports">Laporan saya</Link>}
         <Link href="/#laporan">Jelajahi laporan</Link>
         {u && <Link href="/profile/vouchers">Voucher</Link>}
         {u?.role === "operator" && <Link href="/operator">Operator</Link>}

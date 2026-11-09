@@ -8,7 +8,8 @@ import {
   validatePhoto,
 } from "@/lib/photo-analysis-client.mjs";
 
-type Analysis = {
+export type Analysis = {
+  report_token?: string | null;
   relevant: boolean;
   category: string;
   severity: string;
@@ -25,7 +26,7 @@ type State = {
   retryAt?: number;
   invalid?: boolean;
 };
-export function PhotoAnalysis({ file }: { file: File | null }) {
+export function PhotoAnalysis({ file, onResult, onBusyChange }: { file: File | null; onResult?: (result: Analysis, file: File) => void; onBusyChange?: (busy: boolean) => void }) {
   const [state, setState] = useState<State>({ file: null, stage: "idle" }),
     [attempt, setAttempt] = useState(0),
     [preview, setPreview] = useState<{ file: File; url: string } | null>(null),
@@ -110,6 +111,13 @@ export function PhotoAnalysis({ file }: { file: File | null }) {
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
   }, [state.retryAt]);
+  useEffect(() => {
+    if (file && state.file === file && state.stage === "success" && state.result)
+      onResult?.(state.result, file);
+  }, [file, state, onResult]);
+  useEffect(() => {
+    onBusyChange?.(Boolean(file && (state.file !== file || state.stage === "uploading" || state.stage === "analyzing")));
+  }, [file, state, onBusyChange]);
   if (!file) return null;
   const active: State =
     state.file === file ? state : { file, stage: "uploading" };
@@ -144,11 +152,6 @@ export function PhotoAnalysis({ file }: { file: File | null }) {
           </span>
         </div>
       )}
-      <p className="help-text">
-        Foto dianalisis otomatis oleh Google Gemini. Hasil berupa saran;
-        keputusan penanganan tetap diverifikasi operator. Foto dan hasil belum
-        menjadi laporan sampai kamu menekan Kirim laporan.
-      </p>
       {active.error && (
         <div className="form-error" role="alert">
           <p>{active.error}</p>
@@ -185,7 +188,7 @@ export function PhotoAnalysis({ file }: { file: File | null }) {
               </div>
               <div>
                 <span>Tingkat kerusakan</span>
-                <b>{result.severity.replaceAll("_", " ")}</b>
+                <b>{result.severity.replaceAll("_", " ").replace(/^./, letter => letter.toUpperCase())}</b>
               </div>
               <div>
                 <span>Prioritas penanganan</span>
@@ -202,11 +205,6 @@ export function PhotoAnalysis({ file }: { file: File | null }) {
                 </b>
               </div>
             </div>
-            <p style={{ marginTop: 12 }}>{result.reason}</p>
-            <small className="help-text">
-              Model {result.model}. Lokasi dan estimasi durasi tetap
-              diverifikasi operator.
-            </small>
           </div>
         </div>
       )}

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { callbackInput } from "@/lib/email-confirmation.mjs";
 
+import {PasswordRecovery} from "./password-recovery";
+
 type State = "loading" | "success" | "error" | "empty";
 async function verify(body: unknown) {
   const response = await fetch("/api/auth/confirm", {
@@ -27,6 +29,12 @@ async function verify(body: unknown) {
     );
 }
 export function EmailConfirmation() {
+ const [recovery,setRecovery]=useState<boolean|null>(null);
+ useEffect(()=>{const read=()=>{const hash=new URLSearchParams(location.hash.slice(1)),query=new URLSearchParams(location.search);setRecovery(location.pathname==='/auth/reset'||(hash.get('type')||query.get('type'))==='recovery');};read();window.addEventListener('hashchange',read);window.addEventListener('popstate',read);return()=>{window.removeEventListener('hashchange',read);window.removeEventListener('popstate',read);};},[]);
+ if(recovery===null)return <section className="account-recovery" role="status">Memeriksa tautan…</section>;
+ return recovery?<PasswordRecovery/>:<SignupConfirmation/>;
+}
+function SignupConfirmation() {
   const [state, setState] = useState<State>("loading");
   const [message, setMessage] = useState("");
   const automatic = useRef<Promise<void> | null>(null);

@@ -1,0 +1,14 @@
+.report-location-picker{display:grid;gap:14px;min-width:0}
+.report-location-map-wrap{position:relative;border:1px solid #383838;border-radius:14px;overflow:hidden;isolation:isolate}
+.report-location-map{height:360px;width:100%;background:#1b1b1b;z-index:0}
+.report-location-map .leaflet-tile-pane{filter:grayscale(1) invert(.92) contrast(.88)}
+.report-location-map .leaflet-control-attribution{background:#eeeeeee8;color:#222;font-size:12px;white-space:normal}
+.report-location-map .leaflet-control-attribution a{color:#222;text-decoration:underline}
+.report-location-map .leaflet-control-zoom a{background:#eee;color:#111}
+.report-location-loading{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:6px 12px;background:#111e;color:#eee;border-radius:8px;font-size:14px;pointer-events:none;z-index:1;white-space:nowrap}
+.report-location-pin{background:none;border:0}
+.report-location-pin>span{position:absolute;left:3px;top:3px;width:26px;height:26px;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#111;box-shadow:0 3px 8px #0007}
+.report-location-pin>span:after{content:'';position:absolute;inset:6px;border-radius:50%;background:#fff}
+.report-location-map .leaflet-marker-icon:focus-visible{outline:2px solid #fff;outline-offset:4px}
+.report-location-picker .button{width:100%;white-space:normal}
+@media(max-width:600px){.report-location-map{height:320px}}

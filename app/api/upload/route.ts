@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authorize, failure } from "@/lib/http";
 import { accessToken } from "@/lib/backend";
+import {issueReportReceipt} from "@/lib/report-draft.mjs";
 export async function POST(request: Request) {
   try {
     const u = await authorize(request);
@@ -31,6 +32,8 @@ export async function POST(request: Request) {
             String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
     if (!valid) throw new Error("Isi file bukan foto yang valid.");
     const path = `${u.id}/${crypto.randomUUID()}.${ext[file.type]}`;
+    const reportToken = data.get("report_token");
+    const receipt = reportToken === null ? null : issueReportReceipt(reportToken,u.id,bytes,file.type,path);
     const r = await fetch(
       `${process.env.SUPABASE_URL}/storage/v1/object/report-photos/${path}`,
       {
@@ -45,7 +48,7 @@ export async function POST(request: Request) {
       },
     );
     if (!r.ok) throw new Error("Foto gagal diunggah. Silakan coba kembali.");
-    return NextResponse.json({ path });
+    return NextResponse.json({ path, ...(receipt?{report_receipt:receipt}:{}) });
   } catch (e) {
     return failure(e);
   }

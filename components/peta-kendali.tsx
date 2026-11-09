@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import 'leaflet/dist/leaflet.css';
+import {watchMapTiles} from '@/lib/map-tiles.mjs';
+import {ReportImage} from './report-image';
 
 export interface ReportItem {
   id: string;
@@ -94,16 +96,6 @@ function formatStatusLabel(status: string) {
   return map[status] || status;
 }
 
-function resolvePhotoUrl(photoPath?: string | null) {
-  if (!photoPath) {
-    return 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=900&q=80';
-  }
-  if (/^https?:\/\//i.test(photoPath) || photoPath.startsWith('/')) {
-    return photoPath;
-  }
-  return '/api/photo?path=' + encodeURIComponent(photoPath);
-}
-
 export function PetaKendali({
   reports = [],
   onManageReport,
@@ -119,8 +111,15 @@ export function PetaKendali({
   const [filter, setFilter] = useState<'all' | 'urgent' | 'medium' | 'low' | 'new' | 'completed'>('all');
   const [selectedId, setSelectedId] = useState<string>(dataList[0]?.id || '');
   const [mapReady, setMapReady] = useState(false);
+<<<<<<< HEAD
   const [savingPriority, setSavingPriority] = useState(false);
   const [priorityError, setPriorityError] = useState('');
+=======
+  const [mapAttempt, setMapAttempt] = useState(0);
+  const [tileAttempt, setTileAttempt] = useState(0);
+  const [mapError, setMapError] = useState('');
+  const [tileState, setTileState] = useState({loading:true,error:''});
+>>>>>>> 96832974cc51119ac42ce19b18a56c9c9c9a1a43
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -224,6 +223,7 @@ export function PetaKendali({
     let isMounted = true;
     let observer: ResizeObserver | undefined;
 
+    setMapError('');
     import('leaflet').then((mod) => {
       const L: any = mod.default || mod;
       if (!isMounted || !mapContainerRef.current) return;
@@ -236,15 +236,10 @@ export function PetaKendali({
         ],
         zoom: 13,
         zoomControl: true,
+        scrollWheelZoom: false,
       });
 
       mapInstanceRef.current = instance;
-
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        className: 'lk-map-tiles',
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-      }).addTo(instance);
 
       markersLayerRef.current = L.layerGroup().addTo(instance);
 
@@ -254,6 +249,8 @@ export function PetaKendali({
       observer.observe(mapContainerRef.current);
 
       setMapReady(true);
+    }).catch(() => {
+      if (isMounted) setMapError('Peta belum dapat dimuat. Data laporan tetap tersedia.');
     });
 
     return () => {
@@ -265,7 +262,19 @@ export function PetaKendali({
       markersLayerRef.current = null;
       setMapReady(false);
     };
-  }, []);
+  }, [mapAttempt]);
+
+  useEffect(() => {
+    if (!mapReady || !leafletRef.current || !mapInstanceRef.current) return;
+    const layer = leafletRef.current.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      className: 'lk-map-tiles',
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+    });
+    const stop = watchMapTiles(layer, setTileState);
+    layer.addTo(mapInstanceRef.current);
+    return () => { stop(); layer.remove(); };
+  }, [mapReady, tileAttempt]);
 
   useEffect(() => {
     if (!mapReady || !leafletRef.current || !mapInstanceRef.current || !markersLayerRef.current) {
@@ -368,7 +377,13 @@ export function PetaKendali({
 
       <div className="lk-map-grid">
         <div style={{ background: '#121212', border: '1px solid #262626', borderRadius: '16px', overflow: 'hidden', position: 'relative' }}>
-          <div ref={mapContainerRef} style={{ height: '540px', width: '100%' }} />
+          <div ref={mapContainerRef} role="region" aria-label="Peta kendali laporan Jakarta" style={{ height: '540px', width: '100%' }} />
+          {(mapError || tileState.error || tileState.loading) && (
+            <div role={mapError || tileState.error ? 'alert' : 'status'} style={{position:'absolute',top:14,left:14,right:14,zIndex:500,background:'#171717',border:'1px solid #404040',borderRadius:10,padding:12,fontSize:14}}>
+              <p style={{margin:0}}>{mapError || tileState.error || 'Memuat peta…'}</p>
+              {(mapError || tileState.error) && <button type="button" className="lk-filter-btn" style={{marginTop:8,fontSize:14}} onClick={() => mapError ? setMapAttempt(value => value + 1) : setTileAttempt(value => value + 1)}>Coba lagi</button>}
+            </div>
+          )}
           <div
             style={{
               position: 'absolute',
@@ -431,11 +446,7 @@ export function PetaKendali({
                 marginBottom: '16px',
               }}
             >
-              <img
-                src={resolvePhotoUrl(selectedReport.photo_path)}
-                alt={selectedReport.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
+              <ReportImage report={selectedReport} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
             </div>
 
             {!isCompletedReport && (

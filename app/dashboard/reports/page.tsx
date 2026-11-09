@@ -1,3 +1,4 @@
+import {DataUnavailable} from "@/components/data-unavailable";
 import { requireViewer, backend, accessToken } from "@/lib/backend";
 import { ReportExplorer } from "@/components/widgets";
 import { PageTitle } from "@/components/ui";
@@ -10,16 +11,16 @@ export default async function MyReports() {
     `/rest/v1/submissions?select=report_id&user_id=eq.${user.id}`,
     {},
     token,
-  );
+  ).catch(() => null);
   const ids = [
-    ...new Set(submissions.map((s: { report_id: string }) => s.report_id)),
+    ...new Set((submissions ?? []).map((s: { report_id: string }) => s.report_id)),
   ];
-  const reports: Report[] = ids.length
+  const reports: Report[] | null = submissions === null ? null : ids.length
     ? await backend(
         `/rest/v1/reports?select=*&id=in.(${ids.join(",")})&order=created_at.desc`,
         {},
         token,
-      )
+      ).catch(() => null)
     : [];
   return (
     <div className="container page dashboard-shell">
@@ -30,7 +31,7 @@ export default async function MyReports() {
           title="Laporan saya."
           description="Cari dan pantau laporan yang kamu kirim atau dukung."
         />
-        <ReportExplorer reports={reports} />
+        {reports === null ? <DataUnavailable message="Laporan kamu belum dapat dimuat."/> : <ReportExplorer reports={reports} />}
       </div>
     </div>
   );

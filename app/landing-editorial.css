@@ -1,4 +1,16 @@
 /* Landing: content first, with decoration reserved for the report carousel. */
+.plain-landing {
+  --landing-section-gap: clamp(42px, 6vw, 72px);
+}
+/* Each section contributes half the gap on either side of its content. */
+.plain-landing > :is(.section, .community-section, .join-banner) {
+  padding-block: calc(var(--landing-section-gap) / 2);
+  margin-block: 0;
+}
+/* Measure the surrounding gap from the impact panel's visible borders. */
+.plain-landing > .community-section {
+  margin-block: calc(var(--landing-section-gap) / 2);
+}
 .plain-landing .hero-intro h1 > span {
   background: none;
   color: var(--time-text);
@@ -108,7 +120,7 @@
 }
 .plain-landing .join-banner {
   min-height: 0;
-  padding: 42px 0;
+  padding-inline: 0;
   background: none;
   border: 0;
   border-top: 1px solid #333;
