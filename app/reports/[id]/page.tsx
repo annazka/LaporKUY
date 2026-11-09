@@ -1,10 +1,9 @@
 import {DataUnavailable} from "@/components/data-unavailable";
 import {ReportImage} from '@/components/report-image';
 import {usesRepairPhoto} from '@/lib/report-photo.mjs';
-import { AuthLink } from "@/components/auth-modal";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Camera, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, MapPin, ArrowUpRight } from "lucide-react";
 import { backend, viewer, accessToken, photoUrl } from "@/lib/backend";
 import { Status, DailyFlag, DetailFacts } from "@/components/ui";
 import { OperatorForm, ConfirmRepair } from "@/components/forms";
@@ -70,17 +69,7 @@ export default async function Detail({
         <div className="detail-main">
           <section className="panel">
             <div className="report-photo">
-              {u ? (
-                <ReportImage report={r} loading="eager"/>
-              ) : (
-                <div className="empty compact">
-                  <Camera size={30} />
-                  <p>Masuk untuk melihat foto bukti.</p>
-                  <AuthLink next={`/reports/${r.id}`} className="button small">
-                    Masuk
-                  </AuthLink>
-                </div>
-              )}
+              <ReportImage report={r} loading="eager"/>
               <span className="photo-label">{usesRepairPhoto(r.status)?'FOTO HASIL PERBAIKAN':'FOTO LAPORAN AWAL'}</span>
             </div>
             <h2>Tentang laporan ini</h2>
