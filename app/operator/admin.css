@@ -238,3 +238,23 @@
 .admin-app .summary-attention.is-success{--banner-border:#294c33;--banner-bg:#111e15;--banner-tone:#7ee787;--banner-muted:#b6cdbb;--banner-icon-bg:#1a2d20}
 .admin-app .summary-attention.is-danger{--banner-border:#63312f;--banner-bg:#241413;--banner-tone:#ff7b72;--banner-muted:#dfb7b3;--banner-icon-bg:#3a1d1b}
 .admin-app .summary-attention.is-unavailable{--banner-border:#444;--banner-bg:#191919;--banner-tone:#ccc;--banner-muted:#bbb;--banner-icon-bg:#242424}
+
+.admin-app .queue-mobile-heading,.admin-app .queue-cards{display:none}
+@media(max-width:760px){
+ .admin-app .queue-table-container{display:none}
+ .admin-app .queue-mobile-heading{display:block;margin:0 0 12px;font-size:18px;font-weight:600}
+ .admin-app .queue-cards{display:grid;gap:12px;min-width:0}
+ .admin-app .queue-case-card{display:grid;gap:16px;min-width:0;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}
+ .admin-app .queue-case-heading{display:grid;gap:10px;min-width:0;padding-bottom:14px;border-bottom:1px solid var(--border)}
+ .admin-app .queue-case-heading>div{min-width:0}
+ .admin-app .queue-case-heading strong{display:block;max-width:none;font-size:16px;line-height:1.55;overflow-wrap:anywhere}
+ .admin-app .queue-case-heading small{display:block;margin-top:5px;color:var(--muted);font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+ .admin-app .queue-case-heading .badge{justify-self:start;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+ .admin-app .queue-case-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;min-width:0}
+ .admin-app .queue-case-field{display:grid;align-content:start;gap:5px;min-width:0;font-size:14px}
+ .admin-app .queue-case-field>span:first-child{color:var(--muted);font-size:12px;line-height:1.4}
+ .admin-app .queue-case-field>strong{font-size:14px;font-weight:550;overflow-wrap:anywhere}
+ .admin-app .queue-case-field .badge{justify-self:start;max-width:100%;white-space:normal}
+ .admin-app .queue-case-field .progress-track{min-width:0;margin:2px 0 0}
+ .admin-app .queue-case-action{width:100%}
+}

@@ -36,6 +36,7 @@ export async function Header() {
   return (
     <SiteHeader
       brand={<Brand />}
+      signedIn={Boolean(u)}
       actions={
         u ? (
           <>
