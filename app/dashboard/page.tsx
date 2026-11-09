@@ -1,3 +1,4 @@
+import {DataUnavailable} from "@/components/data-unavailable";
 import Link from "next/link";
 import { ArrowUpRight, Activity } from "lucide-react";
 import { PageTitle, Stats, Empty } from "@/components/ui";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const u = await requireViewer(),
     token = await accessToken();
-  const [submissions, ledger] = await Promise.all([
+  const [submissionResult, ledgerResult] = await Promise.allSettled([
     backend(
       `/rest/v1/submissions?select=report_id&user_id=eq.${u.id}`,
       {},
@@ -22,29 +23,31 @@ export default async function Dashboard() {
       token,
     ),
   ]);
+  const submissions = submissionResult.status === "fulfilled" ? submissionResult.value : null;
+  const ledger = ledgerResult.status === "fulfilled" ? ledgerResult.value : null;
   const ids = [
     ...new Set<string>(
-      submissions.map((s: { report_id: string }) => s.report_id),
+      (submissions ?? []).map((s: { report_id: string }) => s.report_id),
     ),
   ];
-  const mine: Report[] = ids.length
+  const mine: Report[] | null = submissions === null ? null : ids.length
     ? await backend(
         `/rest/v1/reports?select=*&id=in.(${ids.join(",")})&order=created_at.desc`,
         {},
         token,
-      )
+      ).catch(() => null)
     : [];
-  const updates: Update[] = ids.length
+  const updates: Update[] | null = submissions === null ? null : ids.length
     ? await backend(
         `/rest/v1/report_updates?select=*&report_id=in.(${ids.join(",")})&order=created_at.desc&limit=6`,
         {},
         token,
-      )
+      ).catch(() => null)
     : [];
-  const active = mine.filter(
+  const active = (mine ?? []).filter(
       (r) => !["completed", "rejected"].includes(r.status),
     ).length,
-    balance = ledger.reduce(
+    balance = ledger?.reduce(
       (a: number, r: { amount: number }) => a + r.amount,
       0,
     );
@@ -62,21 +65,22 @@ export default async function Dashboard() {
             </Link>
           }
         />
+        {ledger === null && <DataUnavailable message="Saldo poin belum dapat dimuat."/>}
         <Stats
           items={[
             {
               label: "Laporan aktif",
-              value: `${active}/10`,
+              value: mine === null ? "—" : `${active}/10`,
               note: "Laporan yang masih ditangani",
             },
             {
               label: "Laporan selesai",
-              value: mine.filter((r) => r.status === "completed").length,
+              value: mine === null ? "—" : mine.filter((r) => r.status === "completed").length,
               note: "Perbaikan telah terkonfirmasi",
             },
             {
               label: "Poin kamu",
-              value: balance,
+              value: balance ?? "—",
               note: "Poin simulasi dari kontribusimu",
             },
           ]}
@@ -86,7 +90,7 @@ export default async function Dashboard() {
             (status) => (
               <span key={status}>
                 {statusLabels[status]}{" "}
-                <b>{mine.filter((r) => r.status === status).length}</b>
+                <b>{mine === null ? "—" : mine.filter((r) => r.status === status).length}</b>
               </span>
             ),
           )}
@@ -97,7 +101,7 @@ export default async function Dashboard() {
             Jelajahi laporan <ArrowUpRight size={17} />
           </Link>
         </div>
-        {mine.length ? (
+        {mine === null ? <DataUnavailable message="Laporan kamu belum dapat dimuat."/> : mine.length ? (
           <ReportExplorer reports={mine} />
         ) : (
           <Empty title="Mulai kontribusi pertamamu." />
@@ -106,12 +110,12 @@ export default async function Dashboard() {
           <h2>
             <Activity size={19} /> Aktivitas terbaru
           </h2>
-          {updates.length ? (
+          {updates === null ? <DataUnavailable message="Aktivitas terbaru belum dapat dimuat."/> : updates.length ? (
             updates.map((update) => (
               <article className="activity-row" key={update.id}>
                 <div>
                   <Link href={`/reports/${update.report_id}`}>
-                    {mine.find((r) => r.id === update.report_id)?.title ||
+                    {mine?.find((r) => r.id === update.report_id)?.title ||
                       "Detail laporan"}
                   </Link>
                   <p>{update.message}</p>
