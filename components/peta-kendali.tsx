@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import 'leaflet/dist/leaflet.css';
 import {watchMapTiles} from '@/lib/map-tiles.mjs';
+import { formatDate } from '@/lib/types';
 import {ReportImage} from './report-image';
 
 export interface ReportItem {
@@ -21,23 +22,6 @@ export interface ReportItem {
   target_date?: string | null;
   [key: string]: any;
 }
-
-const FALLBACK_REPORTS: ReportItem[] = [
-  {
-    id: 'C0CD9DCD',
-    title: 'jalanan rusak',
-    description: 'jalanan rusak',
-    address: 'pasar pondok labu',
-    latitude: -6.3125,
-    longitude: 106.7942,
-    photo_path: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&w=900&q=80',
-    status: 'in_progress',
-    priority: 'medium',
-    progress: 99,
-    support_count: 3,
-    target_date: '2026-11-26',
-  },
-];
 
 export function getUrgency(report: any) {
   if (report?.status === 'completed') {
@@ -104,8 +88,7 @@ export function PetaKendali({
   onManageReport?: (report: any) => void;
 }) {
   const router = useRouter();
-  const dataList: ReportItem[] =
-    Array.isArray(reports) && reports.length > 0 ? reports : FALLBACK_REPORTS;
+  const dataList: ReportItem[] = Array.isArray(reports) ? reports : [];
 
   const [items, setItems] = useState<ReportItem[]>(dataList);
   const [filter, setFilter] = useState<'all' | 'urgent' | 'medium' | 'low' | 'new' | 'completed'>('all');
@@ -124,10 +107,11 @@ export function PetaKendali({
   const leafletRef = useRef<any>(null);
 
   useEffect(() => {
-    if (Array.isArray(reports) && reports.length > 0) {
-      setItems(reports);
-      setSelectedId((prev) => (reports.some((r) => r.id === prev) ? prev : reports[0].id));
-    }
+    const nextReports = Array.isArray(reports) ? reports : [];
+    setItems(nextReports);
+    setSelectedId((prev) =>
+      nextReports.some((r) => r.id === prev) ? prev : nextReports[0]?.id || ''
+    );
   }, [reports]);
 
   const filteredItems = items.filter((r) => {
@@ -228,10 +212,10 @@ export function PetaKendali({
       leafletRef.current = L;
       const instance = L.map(mapContainerRef.current, {
         center: [
-          Number(selectedReport?.latitude) || -6.3125,
-          Number(selectedReport?.longitude) || 106.7942,
+          Number(selectedReport?.latitude) || -6.2,
+          Number(selectedReport?.longitude) || 106.83,
         ],
-        zoom: 13,
+        zoom: selectedReport ? 13 : 11,
         zoomControl: true,
         scrollWheelZoom: false,
       });
@@ -475,7 +459,7 @@ export function PetaKendali({
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#a3a3a3' }}>Target</span>
-                <strong style={{ color: '#ffffff' }}>{selectedReport.target_date || '26 Nov 2026'}</strong>
+                <strong style={{ color: '#ffffff' }}>{formatDate(selectedReport.target_date ?? null)}</strong>
               </div>
             </div>
 
@@ -489,7 +473,7 @@ export function PetaKendali({
           </div>
         ) : (
           <div style={{ background: '#121212', border: '1px solid #262626', borderRadius: '16px', padding: '22px', color: '#a3a3a3', fontSize: '13px' }}>
-            Tidak ada titik untuk filter ini.
+            {items.length === 0 ? 'Belum ada laporan yang dimuat.' : 'Tidak ada titik untuk filter ini.'}
           </div>
         )}
       </div>
