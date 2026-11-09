@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import 'leaflet/dist/leaflet.css';
 
 export interface ReportItem {
@@ -48,17 +49,7 @@ export function getUrgency(report: any) {
     };
   }
 
-  const isOverdue =
-    report?.target_date &&
-    new Date(report.target_date) < new Date() &&
-    report?.status !== 'completed';
-
-  if (
-    report?.priority === 'urgent' ||
-    report?.priority === 'high' ||
-    isOverdue ||
-    (report?.support_count ?? 0) >= 5
-  ) {
+  if (report?.priority === 'urgent' || report?.priority === 'high') {
     return {
       key: 'urgent' as const,
       label: 'Sangat Darurat',
@@ -69,7 +60,7 @@ export function getUrgency(report: any) {
     };
   }
 
-  if (report?.priority === 'medium' || report?.status === 'in_progress') {
+  if (report?.priority === 'medium') {
     return {
       key: 'medium' as const,
       label: 'Sedang',
@@ -120,6 +111,7 @@ export function PetaKendali({
   reports?: any[];
   onManageReport?: (report: any) => void;
 }) {
+  const router = useRouter();
   const dataList: ReportItem[] =
     Array.isArray(reports) && reports.length > 0 ? reports : FALLBACK_REPORTS;
 
@@ -127,6 +119,8 @@ export function PetaKendali({
   const [filter, setFilter] = useState<'all' | 'urgent' | 'medium' | 'low' | 'new' | 'completed'>('all');
   const [selectedId, setSelectedId] = useState<string>(dataList[0]?.id || '');
   const [mapReady, setMapReady] = useState(false);
+  const [savingPriority, setSavingPriority] = useState(false);
+  const [priorityError, setPriorityError] = useState('');
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -154,20 +148,76 @@ export function PetaKendali({
     filteredItems[0] ||
     null;
 
-  const handlePriorityChange = (newPriority: 'urgent' | 'medium' | 'low') => {
-    if (!selectedReport || selectedReport.status === 'completed') return;
+  const handlePriorityChange = async (newPriority: 'urgent' | 'medium' | 'low') => {
+    if (
+      !selectedReport ||
+      selectedReport.status === 'completed' ||
+      selectedReport.priority === newPriority ||
+      savingPriority
+    ) {
+      return;
+    }
+
+    const targetId = selectedReport.id;
+    const previousPriority = selectedReport.priority;
+    setPriorityError('');
+    setSavingPriority(true);
+
     setItems((prev) =>
       prev.map((item) =>
-        item.id === selectedReport.id
+        item.id === targetId
           ? {
               ...item,
               priority: newPriority,
-              support_count:
-                newPriority === 'urgent' ? Math.max(item.support_count || 0, 5) : 1,
             }
           : item
       )
     );
+
+    try {
+      const label =
+        newPriority === 'urgent'
+          ? 'Darurat'
+          : newPriority === 'medium'
+            ? 'Sedang'
+            : 'Rendah';
+
+      const response = await fetch('/api/operator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: targetId,
+          action: 'priority',
+          priority: newPriority,
+          status: selectedReport.status,
+          progress: selectedReport.progress,
+          start_date: selectedReport.start_date,
+          target_date: selectedReport.target_date,
+          message: `Tingkat urgensi diubah menjadi ${label} melalui Peta Kendali.`,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal menyimpan tingkat urgensi.');
+      }
+      router.refresh();
+    } catch (err) {
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === targetId
+            ? {
+                ...item,
+                priority: previousPriority,
+              }
+            : item
+        )
+      );
+      setPriorityError(
+        err instanceof Error ? err.message : 'Gagal menyimpan tingkat urgensi.'
+      );
+    } finally {
+      setSavingPriority(false);
+    }
   };
 
   useEffect(() => {
@@ -255,6 +305,7 @@ export function PetaKendali({
       const marker = L.marker([lat, lng], { icon, title: rep.title });
       marker.on('click', () => {
         setSelectedId(rep.id);
+        setPriorityError('');
       });
       marker.addTo(layer);
     });
@@ -389,16 +440,27 @@ export function PetaKendali({
 
             {!isCompletedReport && (
               <div style={{ marginBottom: '16px' }}>
-                <div style={{ fontSize: '11px', color: '#8a8a8a', marginBottom: '6px' }}>Ubah Tingkat Urgensi:</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  <button type="button" onClick={() => handlePriorityChange('urgent')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: activeUrgency.key === 'urgent' ? 'rgba(239,68,68,0.2)' : '#1a1a1a', color: '#f87171', border: activeUrgency.key === 'urgent' ? '1px solid #ef4444' : '1px solid #262626' }}>🔴 Darurat</button>
-                  <button type="button" onClick={() => handlePriorityChange('medium')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: activeUrgency.key === 'medium' ? 'rgba(234,179,8,0.2)' : '#1a1a1a', color: '#facc15', border: activeUrgency.key === 'medium' ? '1px solid #eab308' : '1px solid #262626' }}>🟡 Sedang</button>
-                  <button type="button" onClick={() => handlePriorityChange('low')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', background: activeUrgency.key === 'low' ? 'rgba(16,185,129,0.2)' : '#1a1a1a', color: '#34d399', border: activeUrgency.key === 'low' ? '1px solid #10b981' : '1px solid #262626' }}>🟢 Rendah</button>
+                <div style={{ fontSize: '11px', color: '#8a8a8a', marginBottom: '6px' }}>
+                  {savingPriority ? 'Menyimpan tingkat urgensi...' : 'Ubah Tingkat Urgensi:'}
                 </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('urgent')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: activeUrgency.key === 'urgent' ? 'rgba(239,68,68,0.2)' : '#1a1a1a', color: '#f87171', border: activeUrgency.key === 'urgent' ? '1px solid #ef4444' : '1px solid #262626' }}>🔴 Darurat</button>
+                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('medium')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: activeUrgency.key === 'medium' ? 'rgba(234,179,8,0.2)' : '#1a1a1a', color: '#facc15', border: activeUrgency.key === 'medium' ? '1px solid #eab308' : '1px solid #262626' }}>🟡 Sedang</button>
+                  <button type="button" disabled={savingPriority} onClick={() => handlePriorityChange('low')} style={{ padding: '6px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, cursor: savingPriority ? 'wait' : 'pointer', opacity: savingPriority ? 0.65 : 1, background: activeUrgency.key === 'low' ? 'rgba(16,185,129,0.2)' : '#1a1a1a', color: '#34d399', border: activeUrgency.key === 'low' ? '1px solid #10b981' : '1px solid #262626' }}>🟢 Rendah</button>
+                </div>
+                {priorityError && (
+                  <p role="alert" style={{ color: '#f87171', fontSize: '11px', margin: '8px 0 0 0' }}>
+                    {priorityError}
+                  </p>
+                )}
               </div>
             )}
 
             <div style={{ borderTop: '1px solid #262626', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#a3a3a3' }}>Dukungan warga</span>
+                <strong style={{ color: '#ffffff' }}>{(selectedReport.support_count ?? 0) + 1} pelapor</strong>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#a3a3a3' }}>Progres</span>
                 <strong style={{ color: '#ffffff' }}>{selectedReport.progress ?? 0}%</strong>

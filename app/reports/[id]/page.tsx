@@ -110,6 +110,7 @@ export default async function Detail({
                     {
                       submitted: "Laporan diterima",
                       verify: "Laporan terverifikasi",
+                      priority: "Prioritas diperbarui",
                       progress: "Pembaruan harian",
                       reschedule: "Jadwal diperbarui",
                       finish: "Perbaikan selesai",
