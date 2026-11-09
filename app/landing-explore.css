@@ -42,12 +42,29 @@
     gap:14px;
   }
   .landing-header .nav-actions>*{flex-shrink:0}
+  .landing-header.has-account .brand{font-size:18px}
+  .landing-header.has-account .brand-mark{width:32px;height:34px;margin-right:6px}
+  .landing-header.has-account .landing-menu-toggle{width:36px;height:36px}
+  .landing-header.has-account .nav-actions{width:auto;justify-content:flex-end;gap:8px}
+  .landing-header.has-account .nav-actions .nav-point-balance{font-size:12px;gap:5px}
+  .landing-header.has-account .nav-point-balance svg{width:15px;height:15px}
+  .landing-header.has-account .profile-pill>span{width:28px;height:28px}
+}
+@media(max-width:360px){
   .landing-header.has-account .nav-wrap,
   .landing-header.is-floating.has-account .nav-wrap{
     grid-template-columns:minmax(0,1fr) auto;
     grid-template-areas:"brand menu" "actions actions";
   }
-  .landing-header.has-account .nav-actions{width:100%}
+  .landing-header.has-account .nav-actions{width:100%;justify-content:center;gap:14px}
+}
+.landing-header .landing-menu-action{display:none}
+@media(max-width:900px){
+  .landing-header .nav-logout-desktop{display:none}
+  .landing-header .landing-menu-action{display:none;grid-column:1/-1;margin-top:8px;padding:12px 14px 4px;border-top:1px solid color-mix(in oklch,var(--time-text) 14.117647%,transparent)}
+  .landing-header.menu-open .landing-menu-action{display:flex}
+  .landing-header .landing-menu-action .logout-with-label{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:46px;padding:12px 14px;border:1px solid color-mix(in oklch,var(--time-text) 14.117647%,transparent);border-radius:12px;background:color-mix(in oklch,var(--time-text) 3.529412%,transparent);color:var(--time-text)}
+  .landing-header .landing-menu-action .logout-with-label span{font-size:13px;font-weight:600}
 }
 @media(max-width:360px){.header:not(.landing-header) .nav-wrap{column-gap:8px}.header:not(.landing-header) .brand{font-size:18px}.header:not(.landing-header) .brand-symbol{width:28px;height:32px;margin-right:5px}.header:not(.landing-header) .nav-actions{gap:6px}.header .nav-point-balance svg{display:none}}
 
