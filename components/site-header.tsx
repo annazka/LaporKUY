@@ -24,11 +24,13 @@ const sections = [
 export function SiteHeader({
   brand,
   actions,
+  mobileMenuAction,
   children,
   signedIn = false,
 }: {
   brand: ReactNode;
   actions: ReactNode;
+  mobileMenuAction?: ReactNode;
   children: ReactNode;
   signedIn?: boolean;
 }) {
@@ -83,6 +85,11 @@ export function SiteHeader({
                 {label}
               </a>
             ))}
+            {mobileMenuAction && (
+              <div className="landing-menu-action">
+                {mobileMenuAction}
+              </div>
+            )}
           </nav>
         ) : (
           accountArea ? (
