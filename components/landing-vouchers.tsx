@@ -320,7 +320,7 @@ export function LandingVouchers({
                   </>
                 ) : (
                   <div onClick={close}>
-                    <AuthLink className="button full" next="/rewards">
+                    <AuthLink className="button full" next="/profile/vouchers">
                       Masuk untuk menukar <ArrowUpRight size={16} />
                     </AuthLink>
                   </div>
