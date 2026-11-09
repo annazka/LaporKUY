@@ -26,8 +26,7 @@ export function Brand() {
   return (
     <a href="/" className="brand">
       <Image className="brand-mark" src="/media/brand/obelisk.png" alt="" width={36} height={38} priority />
-      Lapor<span>KUY</span>
-      <i />
+      Lapor<span>KUY!</span>
     </a>
   );
 }
@@ -62,7 +61,6 @@ export async function Header() {
     >
       <nav aria-label="Navigasi utama">
         {u && <Link href="/dashboard">Dashboard</Link>}
-        {u && <Link href="/dashboard/reports">Laporan saya</Link>}
         <Link href="/#laporan">Jelajahi laporan</Link>
         {u && <Link href="/profile/vouchers">Voucher</Link>}
         {u?.role === "operator" && <Link href="/operator">Operator</Link>}

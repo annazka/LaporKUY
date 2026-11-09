@@ -271,7 +271,7 @@ export function LandingVouchers({
             </dl>
             <p className="voucher-modal-terms">
               Penukaran mengurangi poin dan stok simulasi. Kode hanya untuk
-              pengujian LaporKUY dan tidak bisa digunakan di lokasi wisata atau
+              pengujian LaporKUY! dan tidak bisa digunakan di lokasi wisata atau
               mitra.
             </p>
             {code ? (

@@ -1,7 +1,9 @@
-import { AuthLink } from "@/components/auth-modal";
+import {DataUnavailable} from "@/components/data-unavailable";
+import {ReportImage} from '@/components/report-image';
+import {usesRepairPhoto} from '@/lib/report-photo.mjs';
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Camera, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, MapPin, ArrowUpRight } from "lucide-react";
 import { backend, viewer, accessToken, photoUrl } from "@/lib/backend";
 import { Status, DailyFlag, DetailFacts } from "@/components/ui";
 import { OperatorForm, ConfirmRepair } from "@/components/forms";
@@ -18,26 +20,27 @@ export default async function Detail({
   const { id } = await params;
   if (!/^[a-f0-9-]{36}$/.test(id)) notFound();
   const [rows, u, query] = await Promise.all([
-    backend(`/rest/v1/reports?id=eq.${id}&select=*`),
+    backend(`/rest/v1/reports?id=eq.${id}&select=*`).catch(() => null),
     viewer(),
     searchParams,
   ]);
+  if (rows === null) return <div className="container page"><DataUnavailable message="Detail laporan belum dapat dimuat."/></div>;
   const r: Report = rows[0];
   if (!r) notFound();
-  const updates: Update[] = await backend(
+  const updates: Update[] | null = await backend(
     `/rest/v1/report_updates?report_id=eq.${id}&order=created_at.desc`,
-  );
+  ).catch(() => null);
   const token = await accessToken();
   const own = u
     ? await backend(
         `/rest/v1/submissions?report_id=eq.${id}&user_id=eq.${u.id}&select=is_primary`,
         {},
         token,
-      )
+      ).catch(() => null)
     : [];
   return (
     <div className="container page">
-      <Link className="back-link" href="/#laporan">
+      <Link className="back-link" href="/dashboard/reports">
         <ArrowLeft size={16} />
         Semua laporan
       </Link>
@@ -66,21 +69,8 @@ export default async function Detail({
         <div className="detail-main">
           <section className="panel">
             <div className="report-photo">
-              {u ? (
-                <img
-                  src={photoUrl(r.photo_path)!}
-                  alt="Bukti kondisi kerusakan yang dilaporkan warga"
-                />
-              ) : (
-                <div className="empty compact">
-                  <Camera size={30} />
-                  <p>Masuk untuk melihat foto bukti.</p>
-                  <AuthLink next={`/reports/${r.id}`} className="button small">
-                    Masuk
-                  </AuthLink>
-                </div>
-              )}
-              <span className="photo-label">FOTO LAPORAN AWAL</span>
+              <ReportImage report={r} loading="eager"/>
+              <span className="photo-label">{usesRepairPhoto(r.status)?'FOTO HASIL PERBAIKAN':'FOTO LAPORAN AWAL'}</span>
             </div>
             <h2>Tentang laporan ini</h2>
             <p className="description">{r.description}</p>
@@ -94,7 +84,7 @@ export default async function Detail({
               <h2>Riwayat progres</h2>
               <span className="small-label">TERBUKA & TERCATAT</span>
             </div>
-            {updates.map((update) => (
+            {updates === null ? <DataUnavailable message="Riwayat progres belum dapat dimuat."/> : updates.length === 0 ? <p>Belum ada riwayat progres.</p> : updates.map((update) => (
               <article className="timeline-entry" key={update.id}>
                 <span className="timeline-dot" />
                 <small>
@@ -184,15 +174,16 @@ export default async function Detail({
           {u?.role === "operator" && (
             <section className="panel">
               <h2>Ruang operator</h2>
-              <OperatorForm key={`${r.status}-${updates.length}`} report={r} />
+              <OperatorForm key={`${r.status}-${updates?.length ?? "unavailable"}`} report={r} />
             </section>
           )}
-          {r.status === "awaiting_confirmation" && own[0]?.is_primary && (
+          {own === null && <DataUnavailable message="Data kontribusi kamu belum dapat dimuat. Muat ulang sebelum melanjutkan tindakan pelapor."/>}
+          {r.status === "awaiting_confirmation" && own?.[0]?.is_primary && (
             <section className="panel">
               <ConfirmRepair id={r.id} />
             </section>
           )}
-          {!own.length && !["completed", "rejected"].includes(r.status) && (
+          {own !== null && !own.length && !["completed", "rejected"].includes(r.status) && (
             <section className="panel">
               <h3>Menemukan kerusakan yang sama?</h3>
               <p>

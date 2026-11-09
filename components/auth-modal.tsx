@@ -58,7 +58,7 @@ export function AuthProvider({children,signedIn}:{children:ReactNode;signedIn:bo
     <button type="button" className="auth-dialog-close" aria-label="Tutup popup" onClick={close}><X size={20}/></button>
     <span className="auth-dialog-symbol" aria-hidden="true"><MapPin size={26}/></span>
     <div className="auth-dialog-intro">
-     <h2 id="auth-title">{auth.mode==='login'?'Masuk ke LaporKUY':'Daftar LaporKUY'}</h2>
+     <h2 id="auth-title">{auth.mode==='login'?'Masuk ke LaporKUY!':'Daftar LaporKUY!'}</h2>
      <p id="auth-description">{auth.mode==='login'?'Masuk untuk melapor, memantau, dan melihat kontribusimu.':'Buat akun dan ikut menjaga Jakarta, satu laporan setiap waktu.'}</p>
     </div>
     <div className="auth-mode-switch" role="group" aria-label="Pilih masuk atau daftar">

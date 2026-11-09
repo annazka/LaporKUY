@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {adminHost,queueMatches,auditCsv,voucherInput} from '../lib/operator-data.mjs';
+import {adminHost,queueMatches,auditCsv,voucherInput,operatorBanner} from '../lib/operator-data.mjs';
 test('only the exact admin host uses the admin subdomain route',()=>{
  assert.equal(adminHost('admin.laporkuy.online'),true);assert.equal(adminHost('ADMIN.LAPORKUY.ONLINE:443'),true);
  for(const host of ['laporkuy.online','admin.laporkuy.online.attacker.test','notadmin.laporkuy.online',null])assert.equal(adminHost(host),false);
@@ -11,6 +11,31 @@ test('daily and overdue queues follow WIB and exclude closed reports',()=>{
  assert.equal(queueMatches({...r,last_update_at:'2026-10-25T18:00:00Z'},'daily',now),false);
  for(const status of ['completed','rejected','awaiting_confirmation'])assert.equal(queueMatches({...r,status},'daily',now),false);
  assert.equal(queueMatches({...r,status:'completed'},'completed',now),true);
+});
+test('operational banner prioritizes unresolved high-priority cases and filters their queue',()=>{
+ const now=new Date('2026-10-30T03:00:00Z');
+ const routine={status:'in_progress',priority:'medium',start_date:'2026-10-29',target_date:'2026-10-29',last_update_at:'2026-10-29T03:00:00Z'};
+ for(const priority of ['high','urgent']){
+  const reports=[routine,{...routine,priority}];
+  const banner=operatorBanner(reports,now);
+  assert.equal(banner.kind,'danger');assert.equal(banner.queue,'severe');
+  assert.equal(reports.filter(r=>queueMatches(r,banner.queue,now)).length,1);
+ }
+ for(const status of ['completed','rejected','awaiting_confirmation']){
+  assert.equal(operatorBanner([{...routine,priority:'urgent',status}],now).kind,'success');
+ }
+ const warning=operatorBanner([routine],now);
+ assert.equal(warning.kind,'warning');assert.equal(warning.queue,'attention');
+ assert.match(warning.title,/1 laporan perlu pembaruan harian dan 1 melewati target/);
+ const submitted=operatorBanner([{status:'submitted',priority:'medium'}],now);
+ assert.equal(submitted.kind,'warning');assert.equal(submitted.queue,'submitted');
+});
+test('operational banner distinguishes no action from unavailable report data',()=>{
+ const now=new Date('2026-10-30T03:00:00Z');
+ assert.equal(operatorBanner([],now).kind,'success');
+ assert.equal(operatorBanner([{status:'in_progress',priority:'medium',start_date:'2026-10-29',target_date:'2026-11-01',last_update_at:'2026-10-30T02:00:00Z'}],now).kind,'success');
+ const failure=operatorBanner([{status:'in_progress',priority:'urgent'}],now,true);
+ assert.equal(failure.kind,'unavailable');assert.equal(failure.queue,null);
 });
 test('CSV exports escape quotes, line breaks and spreadsheet formulas',()=>{
  const csv=auditCsv([{report_id:'abc',kind:'progress',message:'=HYPERLINK("bad")\nnew line'}]);

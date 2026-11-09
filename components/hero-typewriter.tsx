@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const sentences = [
-  "LaporKUY. Laporkan kerusakan infrastruktur. Pantau sampai tuntas.",
+  "LaporKUY! Laporkan kerusakan infrastruktur. Pantau sampai tuntas.",
   "Satu langkah kecilmu, berarti untuk perjalanan banyak orang.",
 ];
 

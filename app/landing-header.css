@@ -82,7 +82,7 @@
   outline: 2px solid var(--mint);
   outline-offset: 5px;
 }
-.plain-landing :is(#fitur, #laporan, #cara-kerja, #dampak, #faq) {
+.plain-landing :is(#tentang-kita, #laporan, #cara-kerja, #dampak, #faq) {
   scroll-margin-top: 12px;
 }
 @media (max-width: 1100px) {
@@ -204,7 +204,7 @@
     animation: none;
   }
 }
-/* Keep the seven landing anchors clear of the account controls. */
+/* Keep landing navigation clear of the account controls. */
 @media (min-width: 901px) {
   .landing-header nav {
     gap: 15px;

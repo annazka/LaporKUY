@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import {ReportImage} from "./report-image";
 import {
   useEffect,
   useMemo,
@@ -10,7 +11,6 @@ import {
 } from "react";
 import {
   ArrowUpRight,
-  CameraOff,
   Clock3,
   LayoutGrid,
   MapPin,
@@ -21,29 +21,7 @@ import { formatDate, statusLabels, type Report } from "@/lib/types";
 import { isOverdue } from "@/lib/rules.mjs";
 import { orbitSlots, orbitIndices, orbitLayout } from "@/lib/orbit-layout.mjs";
 
-function ReportPreview({ report }: { report: Report }) {
-  const [failed, setFailed] = useState(false);
-  return (
-    <div className="landing-report-photo">
-      {failed || !report.photo_path ? (
-        <div className="report-photo-unavailable">
-          <CameraOff size={26} />
-          <span>Foto belum tersedia</span>
-        </div>
-      ) : (
-        <img
-          src={`/api/report-preview/${report.id}`}
-          alt={`Kondisi kerusakan: ${report.title}`}
-          width={640}
-          height={400}
-          loading="lazy"
-          decoding="async"
-          onError={() => setFailed(true)}
-        />
-      )}
-    </div>
-  );
-}
+function ReportPreview({report}:{report:Report}){return <div className="landing-report-photo"><ReportImage report={report} width={640} height={400}/></div>;}
 
 function ReportSlide({
   report: r,

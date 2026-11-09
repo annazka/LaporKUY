@@ -15,8 +15,8 @@ import {LandingVideo} from '@/components/landing-video';
 
 export const dynamic='force-dynamic';
 const faqs=[
- ['Siapa yang bisa mengirim laporan?','Warga yang memiliki akun LaporKUY dapat mengirim foto, deskripsi, dan lokasi kerusakan. Cakupan awal berfokus pada jalan berlubang di Jakarta daratan.'],
- ['Kalau kerusakannya sudah dilaporkan orang lain?','Laporan serupa digabung ke satu kasus dan dihitung sebagai upvote. Satu akun dihitung satu kali untuk kasus yang sama. Bukti tambahan dari akun yang sama tidak menambah upvote.'],
+ ['Siapa yang bisa mengirim laporan?','Warga yang memiliki akun LaporKUY! dapat mengirim foto, deskripsi, dan lokasi kerusakan. Cakupan awal berfokus pada jalan berlubang di Jakarta daratan.'],
+ ['Kalau kerusakannya sudah dilaporkan orang lain?','Laporan digabung sebagai upvote jika kategorinya sama, lokasinya dalam 25 meter, dan AI menilai foto menunjukkan kerusakan fisik yang sama. Satu akun dihitung satu kali untuk kasus yang sama. Bukti tambahan dari akun yang sama tidak menambah upvote.'],
  ['Apakah AI menentukan kapan perbaikan selesai?','AI membantu menilai foto dan merekomendasikan prioritas. Operator tetap memverifikasi laporan serta menentukan tanggal mulai dan target selesai.'],
  ['Bagaimana jika perbaikan melewati target?','Laporan mendapat penanda terlambat. Operator perlu menjelaskan kendala dan target baru. Jadwal sebelumnya tetap tersedia dalam riwayat progres.'],
 ];
@@ -36,11 +36,11 @@ export default async function Home({searchParams}:{searchParams:Promise<{auth?:s
  <HeroTypewriter/>
  <div className="hero-actions"><AuthLink className="button" next="/reports/new">Buat laporan <ArrowUpRight size={18}/></AuthLink>{!user&&<AuthLink className="button secondary">Masuk <ArrowRight size={17}/></AuthLink>}</div>
  </div></section>
- <section id="fitur" className="container section feature-section"><div className="section-heading"><div><h2>Fitur LaporKUY</h2></div></div>
- <div className="landing-feature-list"><article><h3>Pelaporan dengan foto dan lokasi</h3><p>Kirim foto kerusakan, deskripsi, dan titik lokasi jalan. Bukti ini membantu operator memverifikasi kondisi yang kamu laporkan.</p></article>
- <article><h3>Analisis foto otomatis dengan AI</h3><p>Setelah foto diunggah, Gemini membantu mengenali jenis kerusakan, menilai tingkat kerusakan, dan merekomendasikan prioritas penanganan. Hasilnya tetap diverifikasi oleh operator.</p></article>
- <article><h3>Pemantauan status dan progres</h3><div><p>Ikuti status laporan, jadwal perbaikan, dan pembaruan pekerjaan. Jika target berubah, alasan dan riwayat perubahannya tetap bisa kamu lihat.</p><Link className="text-button" href="#laporan">Lihat laporan <ArrowUpRight size={16}/></Link></div></article>
- <article><h3>Dukungan untuk laporan yang sama</h3><p>Laporan untuk kerusakan yang sama digabung menjadi satu kasus. Kontribusi warga tercatat sebagai dukungan agar progres penanganannya bisa dipantau bersama.</p></article></div></section>
+ <section id="tentang-kita" className="container section feature-section" aria-labelledby="about-title"><div className="section-heading"><div><h2 id="about-title">Tentang LaporKUY!</h2></div></div>
+ <div className="landing-feature-list"><article><h3>Laporan warga</h3><p>LaporKUY! membantu warga melaporkan kerusakan infrastruktur lewat foto dan lokasi, lalu memantau penanganannya sampai selesai. Cakupan awal kami adalah jalan berlubang di Jakarta.</p></article>
+ <article><h3>Analisis AI</h3><p>Setiap foto yang kamu unggah dianalisis otomatis oleh AI untuk mengenali jenis dan tingkat kerusakan serta menyarankan prioritas penanganan. Operator tetap memverifikasi hasilnya sebelum menindaklanjuti laporan.</p></article>
+ <article><h3>Status dan progres</h3><div><p>Pantau status laporan, jadwal perbaikan, dan pembaruan pekerjaan sampai selesai. Jika target berubah, alasan dan riwayat perubahannya tetap bisa kamu lihat.</p><Link className="text-button" href="#laporan">Lihat laporan <ArrowUpRight size={16}/></Link></div></article>
+ <article><h3>Poin dan voucher</h3><div><p>Setelah perbaikan selesai dan terkonfirmasi, pelapor mendapat poin yang bisa ditukar dengan voucher. Program poin dan voucher saat ini masih berupa simulasi, belum berlaku sebagai tiket atau manfaat nyata.</p><Link className="text-button" href="#voucher">Lihat voucher <ArrowUpRight size={16}/></Link></div></article></div></section>
  <section id="cara-kerja" className="container section journey-section"><ReportJourney heading={<div className="section-heading"><div><h2>Dari laporan<br/><span>sampai perbaikan.</span></h2></div></div>}/></section>
  <section id="laporan" className="container section latest" aria-labelledby="landing-reports-title"><div className="section-heading"><div><h2 id="landing-reports-title">Laporan jalan rusak<br/><span>di Jakarta.</span></h2></div><AuthLink className="button secondary" next="/reports/new">Buat laporan <ArrowUpRight size={17}/></AuthLink></div>{loadFailed?<Empty title="Laporan belum dapat dimuat." text="Muat ulang halaman untuk mencoba kembali." action={false}/>:<LandingReports reports={list}/>}</section>
  <LandingMap reports={list} failed={loadFailed}/>

@@ -2,6 +2,7 @@ import {redirect} from 'next/navigation';
 import {backend,viewer,accessToken,reports} from '@/lib/backend';
 import type {Update,Voucher} from '@/lib/types';
 import {OperatorDashboard,type AdminEvent,type Redemption} from '@/components/operator-dashboard';
+
 export const dynamic='force-dynamic';
 export const metadata={title:'Meja kendali operator',robots:{index:false,follow:false}};
 export default async function Operator(){

@@ -72,3 +72,16 @@ test('configuration errors, malformed responses, and truncated model output neve
   [()=>Response.json({candidates:[{finishReason:'MAX_TOKENS',content:{parts:[]}}]}),'INCOMPLETE_RESULT'],
  ])await withProvider(async()=>response(),async()=>{await assert.rejects(analyzeImage(png,'image/png'),error=>error.code===code);});
 });
+
+test('visual matching sends labeled photos and validates every candidate result',async()=>{
+ const {compareReportPhotos}=await import('../lib/gemini.mjs');
+ const candidates=[{id:'case-a',bytes:png,mimeType:'image/png'},{id:'case-b',bytes:png,mimeType:'image/png'}];
+ await withProvider(async(_url,init)=>{
+  const payload=JSON.parse(init.body);const parts=payload.contents[0].parts;
+  assert.equal(parts.filter(p=>p.inline_data).length,3);assert.ok(parts.some(p=>p.text?.includes('case-a')));assert.ok(parts.some(p=>p.text?.includes('case-b')));
+  return Response.json({candidates:[{content:{parts:[{text:JSON.stringify({matches:candidates.map(c=>({report_id:c.id,same_damage:false,confidence:.1,reason:'Pola kerusakan berbeda.'}))})}]}}]});
+ },async()=>assert.equal((await compareReportPhotos({bytes:png,mimeType:'image/png'},candidates)).matches.length,2));
+ await withProvider(async()=>Response.json({candidates:[{content:{parts:[{text:JSON.stringify({matches:[{report_id:'invented',same_damage:true,confidence:1,reason:'Invalid reference.'}]})}]}}]}),async()=>{
+  await assert.rejects(compareReportPhotos({bytes:png,mimeType:'image/png'},candidates),error=>error.code==='INVALID_COMPARISON');
+ });
+});
