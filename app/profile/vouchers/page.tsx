@@ -1,3 +1,4 @@
+import {DashboardNav} from "@/components/dashboard-nav";
 import { LandingVouchers } from '@/components/landing-vouchers';
 import { requireViewer, accessToken, backend, pointBalance } from '@/lib/backend';
 import type { Voucher } from '@/lib/types';
@@ -10,5 +11,5 @@ export default async function Vouchers() {
   backend(`/rest/v1/redemptions?select=id,code,voucher_id,created_at&user_id=eq.${user.id}&order=created_at.desc`, {}, token),
  ]);
  const points = balance.status === 'fulfilled' ? balance.value : null;
- return <LandingVouchers catalog vouchers={offers.status === 'fulfilled' ? offers.value as Voucher[] : []} balance={points ?? 0} signedIn failed={offers.status === 'rejected'} accountFailed={points === null || history.status === 'rejected'} redemptions={history.status === 'fulfilled' ? history.value : []}/>;
+ return <div className="container page dashboard-shell"><DashboardNav/><div className="dashboard-content"><LandingVouchers catalog vouchers={offers.status === 'fulfilled' ? offers.value as Voucher[] : []} balance={points ?? 0} signedIn failed={offers.status === 'rejected'} accountFailed={points === null || history.status === 'rejected'} redemptions={history.status === 'fulfilled' ? history.value : []}/></div></div>;
 }

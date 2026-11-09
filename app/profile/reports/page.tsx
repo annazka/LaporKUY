@@ -1,3 +1,4 @@
+import {DashboardNav} from "@/components/dashboard-nav";
 import { PageTitle, Empty } from "@/components/ui";
 import { ReportExplorer } from "@/components/widgets";
 import { requireViewer, reports } from "@/lib/backend";
@@ -16,7 +17,8 @@ export default async function ProfileReports() {
   }
 
   return (
-    <div className="container page">
+    <div className="container page dashboard-shell">
+      <DashboardNav/>
       <div className="dashboard-content">
         <PageTitle
           eyebrow="LAPORAN WARGA"
