@@ -16,6 +16,56 @@
 .voucher-filter-empty{padding:32px 0;display:grid;justify-items:start;gap:16px}
 @media(max-width:800px){.voucher-filters{grid-template-columns:1fr 1fr}.voucher-filters label:first-child{grid-column:1/-1}.header .nav-actions{gap:10px}.header .nav-point-balance{font-size:13px;gap:5px}}
 @media(max-width:480px){.voucher-filters{grid-template-columns:1fr}.voucher-catalog .section-heading{align-items:flex-start;gap:20px}.landing-header .nav-wrap,.landing-header.is-floating .nav-wrap{height:auto;padding-block:12px;flex-wrap:wrap}.landing-header .landing-menu-toggle{margin-left:auto}.landing-header .nav-actions{order:3;width:100%;justify-content:flex-end;margin-left:0}.landing-header .nav-actions .nav-point-balance{font-size:12px}}
+@media(max-width:480px){
+  .header.landing-header,
+  .header.landing-header.is-floating{padding:8px 12px}
+  .landing-header .nav-wrap,
+  .landing-header.is-floating .nav-wrap{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-areas:"brand actions menu";
+    align-items:center;
+    gap:8px 10px;
+    min-height:0;
+    padding:12px 14px;
+  }
+  .landing-header .brand{grid-area:brand;min-width:0}
+  .landing-header .landing-menu-toggle{grid-area:menu;margin:0}
+  .landing-header .nav-actions{
+    grid-area:actions;
+    order:initial;
+    width:auto;
+    min-width:0;
+    margin:0;
+    justify-content:flex-end;
+    flex-wrap:nowrap;
+    gap:14px;
+  }
+  .landing-header .nav-actions>*{flex-shrink:0}
+  .landing-header.has-account .brand{font-size:18px}
+  .landing-header.has-account .brand-mark{width:32px;height:34px;margin-right:6px}
+  .landing-header.has-account .landing-menu-toggle{width:36px;height:36px}
+  .landing-header.has-account .nav-actions{width:auto;justify-content:flex-end;gap:8px}
+  .landing-header.has-account .nav-actions .nav-point-balance{font-size:12px;gap:5px}
+  .landing-header.has-account .nav-point-balance svg{width:15px;height:15px}
+  .landing-header.has-account .profile-pill>span{width:28px;height:28px}
+}
+@media(max-width:360px){
+  .landing-header.has-account .nav-wrap,
+  .landing-header.is-floating.has-account .nav-wrap{
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"brand menu" "actions actions";
+  }
+  .landing-header.has-account .nav-actions{width:100%;justify-content:center;gap:14px}
+}
+.landing-header .landing-menu-action{display:none}
+@media(max-width:900px){
+  .landing-header .nav-logout-desktop{display:none}
+  .landing-header .landing-menu-action{display:none;grid-column:1/-1;margin-top:8px;padding:12px 14px 4px;border-top:1px solid color-mix(in oklch,var(--time-text) 14.117647%,transparent)}
+  .landing-header.menu-open .landing-menu-action{display:flex}
+  .landing-header .landing-menu-action .logout-with-label{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:46px;padding:12px 14px;border:1px solid color-mix(in oklch,var(--time-text) 14.117647%,transparent);border-radius:12px;background:color-mix(in oklch,var(--time-text) 3.529412%,transparent);color:var(--time-text)}
+  .landing-header .landing-menu-action .logout-with-label span{font-size:13px;font-weight:600}
+}
 @media(max-width:360px){.header:not(.landing-header) .nav-wrap{column-gap:8px}.header:not(.landing-header) .brand{font-size:18px}.header:not(.landing-header) .brand-symbol{width:28px;height:32px;margin-right:5px}.header:not(.landing-header) .nav-actions{gap:6px}.header .nav-point-balance svg{display:none}}
 
 .dashboard-content .voucher-catalog{padding-block:0}

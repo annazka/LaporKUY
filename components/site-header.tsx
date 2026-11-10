@@ -23,11 +23,15 @@ const sections = [
 export function SiteHeader({
   brand,
   actions,
+  mobileMenuAction,
   children,
+  signedIn = false,
 }: {
   brand: ReactNode;
   actions: ReactNode;
+  mobileMenuAction?: ReactNode;
   children: ReactNode;
+  signedIn?: boolean;
 }) {
   const pathname = usePathname(),
     landing = pathname === "/";
@@ -64,7 +68,7 @@ export function SiteHeader({
   return (
     <header
       ref={header}
-      className={`header${landing ? ` landing-header${floating ? " is-floating" : ""}${open ? " menu-open" : ""}` : ""}`}
+      className={`header${landing ? ` landing-header${floating ? " is-floating" : ""}${open ? " menu-open" : ""}${signedIn ? " has-account" : ""}` : ""}`}
     >
       <div className="nav-wrap">
         {brand}
@@ -76,6 +80,11 @@ export function SiteHeader({
                 {label}
               </a>
             ))}
+            {mobileMenuAction && (
+              <div className="landing-menu-action">
+                {mobileMenuAction}
+              </div>
+            )}
           </nav>
         ) : (
           children

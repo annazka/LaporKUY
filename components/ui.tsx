@@ -35,6 +35,8 @@ export async function Header() {
   return (
     <SiteHeader
       brand={<Brand />}
+      signedIn={Boolean(u)}
+      mobileMenuAction={u ? <Logout showLabel /> : undefined}
       actions={
         u ? (
           <>
@@ -46,7 +48,7 @@ export async function Header() {
               <span>{u.name.slice(0, 1).toUpperCase()}</span>
               <b>{u.name}</b>
             </Link>
-            <Logout />
+            <span className="nav-logout-desktop"><Logout /></span>
           </>
         ) : (
           <>
