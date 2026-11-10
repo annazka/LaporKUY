@@ -8,8 +8,9 @@ import {ReportLocationPicker,type ReportLocation} from './report-location-picker
 import {validatePhoto} from '@/lib/photo-analysis-client.mjs';
 import {validCoordinates} from '@/lib/rules.mjs';
 
+import {coordinateInput} from '@/lib/location-query.mjs';
 import {REPORT_CATEGORIES} from '@/lib/report-categories.mjs';
-type AddressResult={id:string;label:string;latitude:number;longitude:number};
+type AddressResult={id:string;label:string;latitude:number;longitude:number;approximate?:boolean;preserveInput?:boolean};
 type Draft={category:string;description:string;reportToken:string};
 export function ReportForm(){
  const router=useRouter(),pending=useRef(false),activePhoto=useRef<File|null>(null),locationRequest=useRef(0),uploaded=useRef<{photo:File;token:string;path:string;receipt:string}|null>(null);
@@ -41,17 +42,18 @@ export function ReportForm(){
   },()=>{if(request===locationRequest.current)setLocationMessage('Lokasi perangkat belum dapat diakses. Geser pin atau klik titik laporan pada peta.');},{timeout:15000,enableHighAccuracy:true});
  }
  function chooseAddress(result:AddressResult){
-  locationRequest.current++;cancelSearch();setAddress(result.label);setLocation({latitude:result.latitude,longitude:result.longitude});setLocationMessage('Alamat ditemukan. Periksa posisi pin; geser jika titik kerusakan berada di tempat lain.');
+  locationRequest.current++;cancelSearch();if(!result.preserveInput)setAddress(result.label);setLocation({latitude:result.latitude,longitude:result.longitude});setLocationMessage(result.approximate?'Lokasi perkiraan. Periksa dan geser pin untuk memastikan gang atau nomor rumah yang tepat.':'Lokasi ditemukan. Periksa posisi pin; geser jika titik kerusakan berada di tempat lain.');
  }
  async function searchAddress(){
-  const query=address.trim();if(query.length<3||query.length>160){setAddressError('Masukkan kata pencarian alamat antara 3 dan 160 karakter.');return;}
+  const query=address.trim();if(query.length<3||query.length>300){setAddressError('Masukkan kata pencarian alamat antara 3 dan 300 karakter.');return;}
+  try{const point=coordinateInput(query);if(point){chooseAddress({id:'coordinates',label:`Koordinat ${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`,...point});return;}}catch(e){setAddressError((e as Error).message);return;}
   const request=++locationRequest.current;cancelSearch();const controller=new AbortController();searchAbort.current=controller;setSearching(true);
   try{
    const response=await fetch('/api/geocode?q='+encodeURIComponent(query),{signal:controller.signal});const data=await response.json();
    if(controller.signal.aborted||request!==locationRequest.current)return;
    if(!response.ok)throw Error(data.error||'Alamat belum dapat dicari. Coba lagi.');
    const results:AddressResult[]=Array.isArray(data.results)?data.results.filter((r:AddressResult)=>typeof r.label==='string'&&validCoordinates(r.latitude,r.longitude)):[];
-   if(results.length===1){chooseAddress(results[0]);return;}
+   if(results.length===1&&!results[0].approximate){chooseAddress(results[0]);return;}
    setAddressResults(results);
    if(!results.length)setAddressError('Alamat tidak ditemukan dalam cakupan peta Jakarta. Coba nama jalan atau tempat yang lebih lengkap, atau pilih titik pada peta.');
   }catch(e){if(!controller.signal.aborted&&request===locationRequest.current)setAddressError(e instanceof Error?e.message:'Pencarian gagal. Coba lagi atau pilih titik pada peta.');}
@@ -86,11 +88,11 @@ export function ReportForm(){
   </div>
   <div className="panel form-stack"><div className="form-section-title"><span>02</span><div><h2>Tandai lokasi</h2><p>Geser pin atau klik titik kerusakan pada peta Jakarta.</p></div></div>
    <div className="report-address-search">
-    <label htmlFor="report-address">Cari alamat</label>
-    <div className="report-address-input"><input id="report-address" name="address" value={address} minLength={8} maxLength={300} required disabled={busy} placeholder="Contoh: Monas atau Jalan Tebet Raya, Jakarta" aria-describedby="address-help" aria-controls="address-results" onChange={e=>{locationRequest.current++;cancelSearch();setAddress(e.target.value);setLocation(null);setLocationMessage('Cari alamat atau pilih kembali titik pada peta setelah mengubah alamat.');}} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing){e.preventDefault();if(!busy&&!searching)void searchAddress();}}}/><button type="button" className="button secondary" disabled={busy||searching} onClick={searchAddress}><Search size={17}/>{searching?'Mencari…':'Cari'}</button></div>
-    <p id="address-help" className="help-text">Ketik nama jalan atau tempat, lalu tekan Cari atau Enter. Pencarian menggunakan <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon / OpenStreetMap</a>.</p>
+    <label htmlFor="report-address">Cari alamat atau koordinat</label>
+    <div className="report-address-input"><input id="report-address" name="address" value={address} minLength={8} maxLength={300} required disabled={busy} placeholder="Alamat lengkap atau -6.200000, 106.830000" aria-describedby="address-help" aria-controls="address-results" onChange={e=>{locationRequest.current++;cancelSearch();setAddress(e.target.value);setLocation(null);setLocationMessage('');}} onKeyDown={e=>{if(e.key==='Enter'&&!e.nativeEvent.isComposing){e.preventDefault();if(!busy&&!searching)void searchAddress();}}}/><button type="button" className="button secondary" disabled={busy||searching} onClick={searchAddress}><Search size={17}/>{searching?'Mencari…':'Cari'}</button></div>
+    <p id="address-help" className="help-text">Masukkan alamat lengkap atau koordinat desimal (lintang, bujur), lalu tekan Cari atau Enter. Pencarian menggunakan <a href="https://photon.komoot.io" target="_blank" rel="noreferrer">Photon / OpenStreetMap</a>.</p>
     {searching&&<p role="status" className="help-text">Mencari alamat dalam cakupan peta Jakarta…</p>}
-    <div id="address-results">{addressResults.length>0&&<><p role="status" className="help-text">{addressResults.length} hasil ditemukan. Pilih alamat yang sesuai.</p><ul className="report-address-results" aria-label="Hasil pencarian alamat">{addressResults.map(result=><li key={result.id}><button type="button" disabled={busy} onClick={()=>chooseAddress(result)}><MapPin size={17}/><span>{result.label}</span></button></li>)}</ul></>}</div>
+    <div id="address-results">{addressResults.length>0&&<><p role="status" className="help-text">{addressResults.length} hasil ditemukan. Pilih alamat yang sesuai.</p><ul className="report-address-results" aria-label="Hasil pencarian alamat">{addressResults.map(result=><li key={result.id}><button type="button" disabled={busy} onClick={()=>chooseAddress(result)}><MapPin size={17}/><span>{result.label}{result.approximate&&<small className="address-approximate">Lokasi perkiraan — periksa dan geser pin setelah memilih.</small>}</span></button></li>)}</ul></>}</div>
     {addressError&&<p role="alert" className="form-error">{addressError}</p>}
    </div>
    <button type="button" className="button secondary" disabled={busy} onClick={locate}><MapPin size={18}/>Gunakan lokasi saya</button>
@@ -98,7 +100,6 @@ export function ReportForm(){
    <input type="hidden" name="latitude" value={location?.latitude.toFixed(6)||''}/><input type="hidden" name="longitude" value={location?.longitude.toFixed(6)||''}/>
    {locationMessage&&<p role="status" className="help-text">{locationMessage}</p>}
    <div className="notice"><ShieldCheck size={20}/><p>Identitasmu disembunyikan dari publik. Hindari foto yang memperlihatkan wajah atau data pribadi.</p></div>
-   <p className="help-text">Upvote hanya diberikan jika kategori sama, jarak maksimal 25 meter, dan AI menilai dengan keyakinan tinggi bahwa foto menunjukkan kerusakan yang sama. Jarak yang lebih dekat menambah bobot keyakinan.</p>
    {error&&<div className="form-error" role="alert"><p>{error}</p>{file&&draft.reportToken&&<button type="button" className="button secondary" disabled={busy} onClick={()=>{setDraft({category:'',description:'',reportToken:''});setError('');setAnalysisBusy(true);setAnalysisVersion(value=>value+1);}}>Coba analisis lagi</button>}</div>}{stage&&<p role="status">{stage}</p>}
    <button className="button full" disabled={busy||analysisBusy||searching||!draft.reportToken}>{busy?'Mengirim...':analysisBusy?'Menunggu analisis foto...':'Kirim laporan'}<ArrowUpRight size={18}/></button>
   </div>

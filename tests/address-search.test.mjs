@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {addressQuery,addressResults,createAddressSearch} from '../lib/address-search.mjs';
 const feature=(name='Monas',coordinates=[106.8272,-6.1754])=>({geometry:{type:'Point',coordinates},properties:{name,city:'Jakarta',country:'Indonesia'}});
-test('kata pencarian divalidasi dan spasi dinormalisasi',()=>{assert.equal(addressQuery('  Monas   Jakarta  '),'Monas Jakarta');for(const q of ['',null,'UI','a'.repeat(161),'Monas\nJakarta'])assert.equal(addressQuery(q),null);});
+test('kata pencarian divalidasi dan spasi dinormalisasi',()=>{assert.equal(addressQuery('  Monas   Jakarta  '),'Monas Jakarta');for(const q of ['',null,'UI','a'.repeat(301),'Monas\nJakarta'])assert.equal(addressQuery(q),null);});
 test('hasil hanya berisi titik valid, nama aman, unik dan maksimal lima',()=>{
  const rows=addressResults({features:[feature(),feature(),feature('Bandung',[107.6,-6.9]),feature('invalid',['106.8',-6.2]),{geometry:{type:'Polygon'},properties:{}},...Array.from({length:9},(_,i)=>feature('Alamat '+i,[106.8,-6.2+i*.001]))]});assert.equal(rows.length,5);assert.equal(rows[0].label,'Monas, Jakarta, Indonesia');assert.equal(rows[0].latitude,-6.1754);assert.throws(()=>addressResults({}),/INVALID/);
 });
@@ -34,4 +34,28 @@ test('API memerlukan login dan input valid sebelum menghubungi provider',async()
 test('API menampilkan error aman dan retry-after saat provider dibatasi',async()=>{
  const limited=route({error:{status:429}});const response=await limited.GET({url:'https://example.test/api/geocode?q=Monas'});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'1');
  const failed=route({error:Error('internal provider detail')});const error=await failed.GET({url:'https://example.test/api/geocode?q=Monas'});assert.equal(error.status,502);assert.doesNotMatch(error.body.error,/internal provider/);
+});
+
+import {coordinateInput,addressVariants} from '../lib/location-query.mjs';
+const detailed="Gg. H. Saaman Blok Sa'aman No.30, RT.2/RW.8, Ragunan, Ps. Minggu, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12550, Indonesia";
+test('koordinat desimal menerima koma, spasi, titik koma dan urutan terbalik',()=>{
+ for(const input of ['-6.29, 106.83','(-6.29,106.83)','-6.29 106.83','-6.29;106.83','106.83, -6.29','Koordinat -6.290000, 106.830000'])assert.deepEqual(coordinateInput(input),{latitude:-6.29,longitude:106.83});
+ assert.equal(coordinateInput(detailed),null);assert.throws(()=>coordinateInput('-6.9,107.6'),e=>e.status===400);
+});
+test('koordinat tidak memanggil provider dan tidak mencari lokasi di luar cakupan',async()=>{
+ let calls=0;const search=createAddressSearch({fetcher:async()=>{calls++;throw Error('unexpected');}});
+ const results=await search('-6.29, 106.83');assert.equal(results[0].latitude,-6.29);assert.equal(results[0].approximate,false);
+ await assert.rejects(search('-6.9, 107.6'),e=>e.status===400);assert.equal(calls,0);
+});
+test('alamat lengkap hingga 300 karakter diterima dan disederhanakan bertahap',()=>{
+ assert.equal(addressQuery(detailed),detailed);const variants=addressVariants(detailed);
+ assert.equal(variants[0],detailed);assert.match(variants[1],/Gang H Saaman No30/);assert.doesNotMatch(variants[1],/RT\.|Blok/);assert.match(variants[2],/Gang H Saaman, Ragunan/);assert.equal(variants[3],'Ragunan, Pasar Minggu, Jakarta Selatan');
+});
+test('hasil pencarian yang disederhanakan ditandai sebagai perkiraan dan alamat asli dipertahankan',async()=>{
+ let time=1000;const calls=[];const search=createAddressSearch({now:()=>time,pause:async ms=>{time+=ms;},fetcher:async url=>{calls.push(url.searchParams.get('q'));return {ok:true,status:200,json:async()=>({features:calls.length===3?[feature('Gang H Saaman')]:[]})};}});
+ const rows=await search(detailed);assert.equal(calls.length,3);assert.equal(rows[0].approximate,true);assert.equal(rows[0].preserveInput,true);assert.equal(time,3000);
+});
+test('fallback dibatasi dan hasil kosong tidak mengarang titik koordinat',async()=>{
+ let time=1000,calls=0;const search=createAddressSearch({now:()=>time,pause:async ms=>{time+=ms;},fetcher:async()=>{calls++;return {ok:true,status:200,json:async()=>({features:[]})};}});
+ assert.deepEqual(await search(detailed),[]);assert.equal(calls,4);
 });
