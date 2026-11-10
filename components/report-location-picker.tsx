@@ -42,10 +42,11 @@ function LocationCanvas({value,onChange,disabled=false,onRetry}:{value:ReportLoc
   return()=>{disposed=true;clearTimeout(timer);observer?.disconnect();if(map.current){map.current.stop();map.current.remove();map.current=null;}tiles?.off();marker.current=null;};
  },[]);
  useEffect(()=>{
-  const instance=map.current,pin=marker.current;if(!instance||!pin||!value)return;
+  const instance=map.current,pin=marker.current;if(!instance||!pin)return;
+  if(!value){pin.setOpacity(.45);return;}pin.setOpacity(1);
   pin.setLatLng([value.latitude,value.longitude]);
-  if(!instance.getBounds().contains([value.latitude,value.longitude]))instance.panTo([value.latitude,value.longitude],{animate:false});
- },[value]);
+  instance.setView([value.latitude,value.longitude],Math.max(instance.getZoom(),16),{animate:false});
+ },[value,ready]);
  useEffect(()=>{if(disabled)marker.current?.dragging?.disable();else marker.current?.dragging?.enable();},[disabled,ready]);
  function chooseCenter(){const point=map.current?.getCenter();if(!point||disabled)return;if(!validCoordinates(point.lat,point.lng)){setSelectionError('Pilih titik laporan di wilayah Jakarta daratan.');return;}onChange({latitude:point.lat,longitude:point.lng});setSelectionError('');}
  return <section className="report-location-picker" aria-label="Pilih titik laporan pada peta"><div className="report-location-map-wrap"><div ref={canvas} className="report-location-map" aria-label="Peta pemilihan lokasi laporan"/>{loading&&<p className="report-location-loading" role="status">Memuat peta...</p>}</div>
